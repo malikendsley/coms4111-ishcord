@@ -1,0 +1,31 @@
+<html>
+    <head>
+        <title>The Writing on the Wall</title>
+        <link rel="stylesheet" type="text/css" href={{ url_for('static', filename='style.css')}}>
+    </head>
+    <body>
+        <div class="container">
+            <div class="title">
+                <h1>Writing on the Wall</h1>
+            </div>
+            <div class="login">
+                <form action="/login" method="POST">
+                    <input type="text" name="username" placeholder="Username">
+                    <input type="submit" value="Login">
+                </form>
+            </div>
+            <!-- Div for flashed messages -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                    <div>
+                        <p>Perhaps you would like to <a href="/register">register</a>?</p>
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+</html>
