@@ -1,6 +1,20 @@
 /* Basic styling */
+p {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color : #fff;
+}
+
+a {
+    color : #D2EFF6
+}
+
+a:hover {
+    color : #D2EFF6;
+}
+
+
 body {
-    background-color: #fb0000;
+    background-color: #392d45;
     font-family: 'Open Sans', sans-serif;
     font-size: 16px;
     line-height: 1.5;
@@ -9,11 +23,104 @@ body {
     padding: 0;
     display: flex;
 }
+/* Stylish header */
+h1 {
+    color : #D2EFF6;
+    font-size: 2.5em;
+    font-weight: 300;
+    margin: 0;
+    padding: 0;
+}
 
-.container { 
-    flex: auto;
+h2 {
+    color : #D2EFF6;
+    font-size: 1.5em;
+    font-weight: 300;
+    margin: 0;
+    padding: 0;
+}
+
+h3 {
+    color : #D2EFF6;
+    font-size: 1.2em;
+    font-weight: 300;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    border-radius: 5px;
+    background-color: #503f61;
     width: 80%;
     max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px
+    margin: auto;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+
+}
+
+button {
+    border-radius: 5px;
+    height: 50px;
+    background-color: #D2EFF6;
+    border: none;
+    color: #392d45;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 24px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.login {
+    border-radius: 5px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* login sections should be left right*/
+.login-section {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    align-self: center;
+}
+
+input {
+    background-color: #D2EFF6;
+    height: 50px;
+    vertical-align: top;
+    width: 60%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.servers-column {
+    width: 8%;
+    background-color: blueviolet;
+}
+
+.channel-column {
+    width: 17%;
+    background-color: blue;
+}
+
+.content-area {
+    width: 50%;
+    background-color: green;
+}
+
+.user-column {
+    width: 25%;
+    background-color: yellow;
 }

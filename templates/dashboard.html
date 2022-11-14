@@ -1,16 +1,23 @@
 <html>
-  <style>
-    body{ 
-      font-size: 15pt;
-      font-family: arial;
-    }
-  </style>
-
+  <head>
+    <title>The Writing on the Wall</title>
+    <link rel="stylesheet" type="text/css" href={{ url_for('static', filename='style.css')}}>
+  </head>
 
   <body>
-    <h1>My First Web Page</h1>
-    <p>My first paragraph.</p>
-    <p>My name is <b>{{ username }}</b>.</p>
+    <!-- 4 columns as per style.css -->
+    <div class='servers-column'>
+      <p> Servers </p>
+    </div>
+    <div class='channel-column'>
+      <p> Channels </p>
+    </div>
+    <div class='content-area'>
+      <p> Content Area </p>
+    </div>
+    <div class='user-column'>
+      <p> Users </p>
+    </div>
   </body>
 
 

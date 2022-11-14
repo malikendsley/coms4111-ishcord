@@ -1,0 +1,40 @@
+<html>
+    <head>
+        <title>Register as a New Wall Writer</title>
+        <link rel="stylesheet" type="text/css" href={{ url_for('static', filename='style.css')}} />
+    </head>
+    <body>
+        <div class="container">
+            <div class="title">
+                <h1>Register as a Wall Writer</h1>
+            </div>
+            <div class="login">
+                <form action="/register" method="POST">
+                    <div class="login-section">
+                        <label for="username">Username</label>
+                        <input type="text" name="username" placeholder="Username" />
+                    </div>
+                    <div class="login-section">
+                        <label for="color">Pick your user color</label>
+                        <input type="color" name="color" placeholder="Color" />
+                    </div>
+                </hr>
+                <button type="submit" value="Register">Register</button>
+            </form>
+        </div>
+        <!-- Div for flashed messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash">
+                    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                </div>
+                <div>
+                    <p>
+                        Perhaps you would like to <a href="/login">login</a>?
+                    </p>
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+</body>
+</html>

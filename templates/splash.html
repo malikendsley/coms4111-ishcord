@@ -1,0 +1,21 @@
+<html>
+    <head>
+        <title>The Writing on the Wall</title>
+        <link rel="stylesheet" type="text/css" href={{ url_for('static', filename='style.css')}} />
+    </head>
+    <body>
+        <div class="container">
+            <div>
+                <h1 style="text-align:center;">The Writing on the Wall</h1>
+                <h2 style="text-align:center;">by</h2>
+                <h3 style="text-align:center;">Malik Endsley and Jennifer Wang</h3>
+            </div>
+            </hr>
+            <div style="margin: 0 auto; display: flex; justify-content: center;">
+                <!-- login, register buttons -->
+                <button onclick="location.href='{{ url_for('login') }}'">Login</button>
+                <button onclick="location.href='{{ url_for('register') }}'">Register</button>
+            </div>
+        </div>
+    </body>
+</html>
