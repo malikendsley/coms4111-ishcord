@@ -47,7 +47,6 @@ h3 {
 }
 
 .container {
-    border-radius: 5px;
     background-color: #503f61;
     width: 80%;
     max-width: 1200px;
@@ -58,7 +57,6 @@ h3 {
 }
 
 button {
-    border-radius: 5px;
     height: 50px;
     background-color: #b0c9cf;
     border: none;
@@ -75,7 +73,6 @@ button {
 }
 
 .login {
-    border-radius: 5px;
     margin-top: 20px;
     margin-bottom: 20px;
 }
@@ -100,7 +97,6 @@ input {
     width: 60%;
     padding: 10px;
     border: 1px solid #ccc;
-    border-radius: 5px;
 }
 
 .servers-column {
@@ -122,12 +118,14 @@ input {
 }
 
 .content-area {
+    height: 100%;
     width: 40%;
     background-color: #392d45;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    padding: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .user-column {
@@ -135,22 +133,46 @@ input {
     background-color: #292132;
     display: flex;
     flex-direction: column;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .top-divider {
-    height: 15%;
-}
+    min-height: 15%;
+    max-height: 15%;
+    /* bottom border, text mint */
+    border-bottom: 1px solid #b0c9cf;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    justify-content: center;
 
-.bottom-divider {
-    height: 15%;
 }
+.top-divider > div {
+    height: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+.bottom-divider {
+    margin-top: 10px;
+    min-height: 15%;
+    border-top: 1px solid #b0c9cf;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    justify-content: center;}
 
 .channel-list {
     flex: auto;
 }
 
 .user-list {
+    height: 27.5%;
     flex: auto;
+    overflow-x: hidden;
 }
 
 .message-list {
@@ -159,6 +181,7 @@ input {
 
 .server-list {
     flex: auto;
+    overflow-x: hidden;
 }
 
 .modal {
@@ -166,7 +189,6 @@ input {
     z-index: 1;
     left: 50%;
     top: 50%;
-    border-radius: 10px;
     padding: 20px;
     transform: translate(-50%, -50%);
     width: 70%;
@@ -188,20 +210,22 @@ input {
     background-color: rgba(0, 0, 0, 0.5)
 }
 
-.server-form {
+.create-form {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
     height: 90%;
 }
 
-.server-form > * {
+.create-form > * {
     text-align:center;
     width: 100%;
 }
 
 .profile-button {
-    width: 90%;
+    width: 50%;
+    margin: 15px;
+
 }
 
 .add-server-button {
@@ -215,38 +239,70 @@ input {
     background-color: #392d45;
     color: #b0c9cf;
     padding: 10px;
-    border-radius: 5px;
     margin: 10px;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
 }
 
 .server-entry {
-    border-radius: 5px;
+    padding: 5%;
+    margin-bottom: 5%;
     background-color: #392d45;
     cursor: pointer;
 }
 
 .server-entry-highlighted {
-    border-radius: 5px;
     background-color: #b0c9cf;
 }
 
 .channel-entry {
-    border-radius: 5px;
+    padding: 5%;
+    margin-bottom: 5%;
     background-color: #392d45;
     cursor: pointer;
 }
 
 .channel-entry:hover {
-    border-radius: 5px;
     background-color: #4e475b;
 }
 
 .channel-entry-highlighted {
-    border-radius: 5px;
     background-color: #b0c9cf;
 }
 
 .selected {
     background-color: #4e475b !important;
+}
+
+.user {
+    background-color: #392d45;
+}
+
+.user > p {
+    color : #b0c9cf;
+    padding: 10px;
+}
+
+.you {
+    background-color: #625075;
+}
+
+.you > p {
+    color: #b0c9cf;
+    padding: 10px;
+
+}
+
+.message-form {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.message-box {
+    height: 50px;
+    flex: 1;
+    
+    margin-right: 10px;
 }

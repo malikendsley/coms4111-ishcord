@@ -163,14 +163,15 @@ def dashboard(server, channel):
 	print("User visited dashboard")
 	# if server and channel are specified, set cookies
 	if server and channel:
-		resp = make_response(render_template('dashboard.html'))
+		resp = make_response(render_template('dashboard.html', name=request.cookies.get('name'), server=server, channel=channel, uid=request.cookies.get('uid')))
 		resp.set_cookie('server', server)
 		# strip quotes from channel name
 		resp.set_cookie('channel', str(channel))
 		return resp
 	# if not, just show dashboard
 	else:
-		return render_template('dashboard.html')
+		print("No server or channel specified")
+		return render_template('dashboard.html', name=request.cookies.get('name'), server=server, channel=channel, uid=request.cookies.get('uid'))
 
 @app.route('/', methods=['GET'])
 def index():
@@ -180,6 +181,16 @@ def index():
 	else:
 		print("User visited index page")
 		return render_template('splash.html')
+
+@app.route('/logout', methods=['GET'])
+def logout():
+	print("User logged out")
+	resp = make_response(redirect('/'))
+	resp.set_cookie('name', '', expires=0)
+	resp.set_cookie('uid', '', expires=0)
+	resp.set_cookie('server', '', expires=0)
+	resp.set_cookie('channel', '', expires=0)
+	return resp
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -259,7 +270,35 @@ def create_server(uid):
 		redirect('/dashboard')
 	flash("Server created successfully")
 	return redirect('/dashboard')
-  
+
+@app.route('/api/<fid>/create_channel', methods=['POST'])
+def create_channel(fid):
+	# get details
+	name = request.form['channel-name']
+	topic = request.form['channel-topic']
+
+	print("User created channel:", name, topic, fid)
+	# insert into db
+	try:
+		# check if channel exists
+		cursor = g.conn.execute("SELECT cname FROM channels_contains WHERE cname = %s AND fid = %s", name, fid)
+		if cursor.rowcount > 0:
+			cursor.close()
+			print("Channel already exists")
+			flash("Channel already exists")
+			return redirect('/dashboard')
+		# create channel
+		else:
+			cursor.close()
+			g.conn.execute("INSERT INTO channels_contains (cname, topic, fid) VALUES (%s, %s, %s)", name, topic, fid)
+			print("New channel created:", name, topic, fid)
+	except Exception as e:
+		print("Error creating channel:", e)
+		flash("Error creating channel, please try again")
+		redirect('/dashboard')
+	flash("Channel created successfully")
+	return redirect('/dashboard')
+
 # get all messages in a channel, long polling style
 @app.route('/api/<server>/<channel>/', methods=['GET'], defaults={'last': None})
 @app.route('/api/<server>/<channel>/<last>', methods=['GET'])
@@ -292,67 +331,6 @@ def get_messages(server, channel, last):
 	except Exception as e:
 		print("Error getting messages:", e)
 		return jsonify({'success': False})
-
-# get all channels in a server
-@app.route('/api/<server>/channels', methods=['GET'])
-def get_channels(server):
-	print("User requested channels for server:", server)
-	try:
-		cursor = g.conn.execute("SELECT cname, topic FROM channels_contains WHERE fid = %s", server)
-		channels = []
-		columns = cursor.keys()
-		for row in cursor:
-			channels.append(dict(zip(columns, row)))
-		cursor.close()
-		return jsonify(channels)
-	except Exception as e:
-		print("Error getting channels:", e)
-		return jsonify({'error': 'Error getting channels'})
-
-# get all servers for a user
-@app.route('/api/<uid>/servers', methods=['GET'])
-def get_servers(uid):
-	print("User requested servers for user:", uid)
-	try:
-		cursor = g.conn.execute("SELECT * FROM member_of WHERE uid = %s", uid)
-		servers = []
-		# only include columns named fid and since
-		servers = [{k: v for k, v in row.items() if k in ['fid', 'since']} for row in cursor]
-		cursor.close()
-		# for each server, get its name, icon, and description
-		for server in servers:
-			cursor = g.conn.execute("SELECT name, icon, description FROM forums_administrates WHERE fid = %s", server['fid'])
-			row = cursor.fetchone()
-			server['name'] = row[0]
-			server['icon'] = row[1]
-			server['description'] = row[2]
-			cursor.close()
-		return jsonify(servers)
-	except Exception as e:
-		print("Error getting servers:", e)
-		return jsonify({'error': 'Error getting servers'})
-
-# get all users in a server
-@app.route('/api/<server>/users', methods=['GET'])
-def get_users(server):
-	print("User requested users for server:", server)
-	try:
-		# get all uids in server
-		server_cursor = g.conn.execute("SELECT * FROM member_of WHERE fid = %s", server)
-		users = []
-		# only include columns named uid and since
-		users = [{k: v for k, v in row.items() if k in ['uid', 'since']} for row in server_cursor]
-		# for each uid in users, get name from users table
-		server_cursor.close()
-		for key in users:
-			uid = key['uid']
-			user_cursor = g.conn.execute("SELECT name FROM users WHERE uid = %s", uid)
-			key['name'] = user_cursor.fetchone()[0]
-			user_cursor.close()
-		return jsonify(users)
-	except Exception as e:
-		print("Error getting users:", e)
-		return jsonify({'error': 'Error getting users'})
 
 if __name__ == "__main__":
 	import click

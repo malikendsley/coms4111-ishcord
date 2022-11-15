@@ -2,73 +2,219 @@
   <head>
     <title>The Writing on the Wall</title>
     <link rel="stylesheet" type="text/css" href={{ url_for("static", filename="style.css")}} />
-    <script src={{ url_for("static", filename="serverlist.js")}} defer></script>
-    <script src={{ url_for("static", filename="channels.js")}} defer></script>
     <script src={{ url_for("static", filename="messaging.js")}} defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+    <script>
+      // after page load, attach onclick handlers to the divs in the server-list
+      $(document).ready(function() {
+        //add onclick handler to each server in the server-list
+        $(".server-entry").click(function() {
+          var server_id = $(this).attr("id");
+          console.log("server id: " + server_id);
+          window.location.href = "/dashboard/" + server_id + "/general";
+        });
+        //add onclick handler to each channel in the channel-list
+        $(".channel-entry").click(function() {
+          //find the cookie named server
+          var server_id = document.cookie.split("; ").find(row => row.startsWith("server")).split("=")[1];
+          var channel_id = $(this).attr("id");
+          window.location.href = "/dashboard/" + server_id + "/" + channel_id;
+        });
+        // copy selected server div into div with id "channel-header"
+        $(".server-entry.selected").clone().appendTo("#channel-header");
+      });
+    </script>
   </head>
-
   <body>
     <div id="new-server-modal" class="modal-background">
       <div class="modal">
-        <form class="server-form" action={{ "/api/" + request.cookies.get('uid') + "/create_server" }} method="POST"> 
-          <h1> Create a new server </h1>
-          <label for="server-name">Server Name</label>
-          <input type="text" id="server-name" name="server-name" placeholder="Server Name" required/>
-          <label for="server-description">Server Description</label>
-          <input type="text" id="server-description" name="server-description" placeholder="Server Description" required/>
+        <form class="create-form" action={{ "/api/" + request.cookies.get('uid') + "/create_server" }} method="POST">
+          <h1>Create a new server</h1>
+          <label for="server-name">
+            <h2>Server Name</h2>
+          </label>
+          <input type="text"
+                 id="server-name"
+                 name="server-name"
+                 placeholder="Server Name"
+                 required/>
+          <label for="server-description">
+            <h2>Server Description</h2>
+          </label>
+          <input type="text"
+                 id="server-description"
+                 name="server-description"
+                 placeholder="Server Description"
+                 required/>
           <button type="submit" id="create-server">Create Server</button>
+          <button type="button"
+                  id="cancel-server"
+                  onclick="document.getElementById('new-server-modal').style.display='none">
+            Cancel
+          </button>
+        </form>
+      </div>
+    </div>
+    <div id="new-channel-modal" class="modal-background">
+      <div class="modal">
+        <form class="create-form" action={{ "/api/" + request.cookies.get('uid') + "/create_channel" }} method="POST">
+          <h1>Create a new channel</h1>
+          <label for="channel-name">
+            <h2>Channel Name</h2>
+          </label>
+          <input type="text"
+                 id="channel-name"
+                 name="channel-name"
+                 placeholder="Channel Name"
+                 required/>
+          <label for="channel-description">
+            <h2>Channel Topic</h2>
+          </label>
+          <input type="text"
+                 id="channel-topic"
+                 name="channel-topic"
+                 placeholder="Channel Topic"
+                 required/>
+          <button type="submit" id="create-channel">Create Channel</button>
+          <button type="button"
+                  id="cancel-server"
+                  onclick="document.getElementById('new-channel-modal').style.display='none">
+            Cancel
+          </button>
+        </form>
       </div>
     </div>
     {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    <div id="hideondelay" class="flash">
-                        {% for message in messages %}
-                            <p>{{ message }}</p>
-                        {% endfor %}
-                    </div>
-
-                {% endif %}
-            {% endwith %}
+      {% if messages %}
+        <div id="hideondelay" class="flash">
+          {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
     <div class="servers-column">
       <div class="top-divider">
-        <button class="profile-button"> Profile </button>
+        <h2>Logged in as {{ name }}</h2>
+        <button class="profile-button">Profile</button>
       </div>
       <div id="serverlist" class="server-list">
-        <!-- Populated by JS -->
-      </div>
-      <div class="bottom-divider">
-        <button class="add-server-button" onclick="document.getElementById('new-server-modal').style.display='block'"> New Server</button>
+        {% set data = g.conn.execute("SELECT forums_administrates.name, forums_administrates.description, forums_administrates.fid
+        FROM forums_administrates, member_of, users
+        WHERE member_of.uid = users.uid
+        AND member_of.fid = forums_administrates.fid
+        AND users.uid = %s;", uid) %}
+        {% for row in data %}
+          {% if row['fid'] == server | int %}
+            <div class="server-entry selected" id="{{ row['fid'] }}">
+            {% else %}
+              <div class="server-entry" id="{{ row['fid'] }}">
+              {% endif %}
+              <h2>{{ row['name'] }}</h2>
+              <p>{{ row['description'] }}</p>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="bottom-divider">
+          <button class="add-server-button"
+                  onclick="document.getElementById('new-server-modal').style.display='block">
+            New Server
+          </button>
+        </div>
       </div>
     </div>
     <div class="channel-column">
-      <div class="top-divider">
-        {{ request.cookies.get('server') }}
+      <div id="channel-header" class="top-divider">
+
       </div>
       <div id="channel-list" class="channel-list">
-        <!-- Populated by JS -->
+        {% set data = g.conn.execute("SELECT cname, topic FROM channels_contains WHERE fid = %s;", server) %}
+        {% for row in data %}
+          {% if row['cname'] == channel %}
+            <div class="channel-entry selected" id="{{ row['cname'] }}">
+            {% else %}
+              <div class="channel-entry" id="{{ row['cname'] }}">
+              {% endif %}
+              <h2>{{ row['cname'] }}</h2>
+              <p>{{ row['topic'] }}</p>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="bottom-divider">
+          {% if server %}
+          <button class="add-channel-button"
+                  onclick="document.getElementById('new-channel-modal').style.display='block">
+            New Channel
+          </button>
+          {% endif %}
+        </div>
       </div>
     </div>
     <div class="content-area">
-      <div class="top-divider">
-        <!-- Populated by JS -->
+      <div id="content-header"class="top-divider">
+        <h2>{{ channel }}</h2>
       </div>
       <div id="message-list" class="message-list">
         <!-- Populated by JS -->
       </div>
       <div class="bottom-divider">
-        <form class="message-form" action="/api/<server>/<channel>/post" method="POST">
-          <input type="text" name="message" placeholder="Type a message..." />
-          <button type="submit" value="Send">Send</button>
+        <form class="message-form"
+              action="/api/<server>/<channel>/post"
+              method="POST">
+          <input class="message-box"
+                 type="text"
+                 name="message"
+                 placeholder="Type a message..."/>
+          <button class="send-button" type="submit" value="Send">Send</button>
         </form>
       </div>
     </div>
     <div class="user-column">
       <div class="top-divider">
-        <!-- Populated by JS -->
+        <h2>Friends in Server</h2>
       </div>
       <div class="user-list">
-        <!-- Populated by JS -->
+        {% set data =  g.conn.execute("select name from (select uid, name from member_of natural join users where member_of.fid = %s) as a where a.uid in (
+          select uid_sender as uid from friends_with 
+          where uid_receiver = %s and status = 'accepted'
+          union select uid_receiver from friends_with 
+          where uid_sender = %s and status = 'accepted');",server, uid, uid) %}
+        {% for row in data %}
+          {% if name == row[0] %}
+            <div class="you">
+            {% else %}
+              <div class="user">
+              {% endif %}
+              <p>{{ row[0] }}</p>
+            </div>
+          {% endfor %}
       </div>
-  </div>
+      <div class="top-divider">
+          <h2>
+            Users in Server
+          </h2>
+      </div>
+      <div class="user-list">
+        {% set data = g.conn.execute("SELECT name FROM member_of NATURAL JOIN users WHERE fid = %s;", server).fetchall() %}
+        {% for row in data %}
+          {% if name == row[0] %}
+            <div class="you">
+            {% else %}
+              <div class="user">
+              {% endif %}
+              <p>
+                {{ row[0] }}
+              </p>
+            </div>
+          {% endfor %}
+      </div>
+      <div class="bottom-divider">
+        <form action="/logout">
+          <button class="add-channel-button"
+                  type="submit"
+                  onclick="">
+            Log Out
+          </button>
+        </form>
+      </div>
+    </div>
   </body>
 </html>
