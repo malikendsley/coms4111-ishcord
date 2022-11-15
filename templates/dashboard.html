@@ -1,24 +1,74 @@
 <html>
   <head>
     <title>The Writing on the Wall</title>
-    <link rel="stylesheet" type="text/css" href={{ url_for('static', filename='style.css')}}>
+    <link rel="stylesheet" type="text/css" href={{ url_for("static", filename="style.css")}} />
+    <script src={{ url_for("static", filename="serverlist.js")}} defer></script>
+    <script src={{ url_for("static", filename="channels.js")}} defer></script>
+    <script src={{ url_for("static", filename="messaging.js")}} defer></script>
   </head>
 
   <body>
-    <!-- 4 columns as per style.css -->
-    <div class='servers-column'>
-      <p> Servers </p>
+    <div id="new-server-modal" class="modal-background">
+      <div class="modal">
+        <form class="server-form" action={{ "/api/" + request.cookies.get('uid') + "/create_server" }} method="POST"> 
+          <h1> Create a new server </h1>
+          <label for="server-name">Server Name</label>
+          <input type="text" id="server-name" name="server-name" placeholder="Server Name" required/>
+          <label for="server-description">Server Description</label>
+          <input type="text" id="server-description" name="server-description" placeholder="Server Description" required/>
+          <button type="submit" id="create-server">Create Server</button>
+      </div>
     </div>
-    <div class='channel-column'>
-      <p> Channels </p>
+    {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div id="hideondelay" class="flash">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+
+                {% endif %}
+            {% endwith %}
+    <div class="servers-column">
+      <div class="top-divider">
+        <button class="profile-button"> Profile </button>
+      </div>
+      <div id="serverlist" class="server-list">
+        <!-- Populated by JS -->
+      </div>
+      <div class="bottom-divider">
+        <button class="add-server-button" onclick="document.getElementById('new-server-modal').style.display='block'"> New Server</button>
+      </div>
     </div>
-    <div class='content-area'>
-      <p> Content Area </p>
+    <div class="channel-column">
+      <div class="top-divider">
+        {{ request.cookies.get('server') }}
+      </div>
+      <div id="channel-list" class="channel-list">
+        <!-- Populated by JS -->
+      </div>
     </div>
-    <div class='user-column'>
-      <p> Users </p>
+    <div class="content-area">
+      <div class="top-divider">
+        <!-- Populated by JS -->
+      </div>
+      <div id="message-list" class="message-list">
+        <!-- Populated by JS -->
+      </div>
+      <div class="bottom-divider">
+        <form class="message-form" action="/api/<server>/<channel>/post" method="POST">
+          <input type="text" name="message" placeholder="Type a message..." />
+          <button type="submit" value="Send">Send</button>
+        </form>
+      </div>
     </div>
+    <div class="user-column">
+      <div class="top-divider">
+        <!-- Populated by JS -->
+      </div>
+      <div class="user-list">
+        <!-- Populated by JS -->
+      </div>
+  </div>
   </body>
-
-
 </html>

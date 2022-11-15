@@ -1,17 +1,15 @@
-/* Basic styling */
 p {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     color : #fff;
 }
 
 a {
-    color : #D2EFF6
+    color : #b0c9cf
 }
 
 a:hover {
-    color : #D2EFF6;
+    color : #b0c9cf;
 }
-
 
 body {
     background-color: #392d45;
@@ -23,9 +21,9 @@ body {
     padding: 0;
     display: flex;
 }
-/* Stylish header */
+
 h1 {
-    color : #D2EFF6;
+    color : #b0c9cf;
     font-size: 2.5em;
     font-weight: 300;
     margin: 0;
@@ -33,7 +31,7 @@ h1 {
 }
 
 h2 {
-    color : #D2EFF6;
+    color : #b0c9cf;
     font-size: 1.5em;
     font-weight: 300;
     margin: 0;
@@ -41,7 +39,7 @@ h2 {
 }
 
 h3 {
-    color : #D2EFF6;
+    color : #b0c9cf;
     font-size: 1.2em;
     font-weight: 300;
     margin: 0;
@@ -62,7 +60,7 @@ h3 {
 button {
     border-radius: 5px;
     height: 50px;
-    background-color: #D2EFF6;
+    background-color: #b0c9cf;
     border: none;
     color: #392d45;
     padding: 15px 32px;
@@ -82,7 +80,6 @@ button {
     margin-bottom: 20px;
 }
 
-/* login sections should be left right*/
 .login-section {
     display: flex;
     flex-direction: row;
@@ -90,13 +87,14 @@ button {
 }
 
 label {
+    color : #b0c9cf;
     display: block;
     margin-bottom: 5px;
     align-self: center;
 }
 
 input {
-    background-color: #D2EFF6;
+    background-color: #b0c9cf;
     height: 50px;
     vertical-align: top;
     width: 60%;
@@ -106,21 +104,149 @@ input {
 }
 
 .servers-column {
-    width: 8%;
-    background-color: blueviolet;
+    width: 15%;
+    background-color: #231e29;
+    display: flex;
+    flex-direction: column;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .channel-column {
-    width: 17%;
-    background-color: blue;
+    width: 15%;
+    background-color: #292132;
+    display: flex;
+    flex-direction: column;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .content-area {
-    width: 50%;
-    background-color: green;
+    width: 40%;
+    background-color: #392d45;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 10px;
 }
 
 .user-column {
-    width: 25%;
-    background-color: yellow;
+    width: 20%;
+    background-color: #292132;
+    display: flex;
+    flex-direction: column;
+}
+
+.top-divider {
+    height: 15%;
+}
+
+.bottom-divider {
+    height: 15%;
+}
+
+.channel-list {
+    flex: auto;
+}
+
+.user-list {
+    flex: auto;
+}
+
+.message-list {
+    flex: auto;
+}
+
+.server-list {
+    flex: auto;
+}
+
+.modal {
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    top: 50%;
+    border-radius: 10px;
+    padding: 20px;
+    transform: translate(-50%, -50%);
+    width: 70%;
+    height: 70%;
+    overflow: auto;
+    background-color: #392d45;
+    
+}
+
+.modal-background {
+    display: none;
+    position: fixed;
+    z-index: 0.5;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5)
+}
+
+.server-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    height: 90%;
+}
+
+.server-form > * {
+    text-align:center;
+    width: 100%;
+}
+
+.profile-button {
+    width: 90%;
+}
+
+.add-server-button {
+    width: 90%;
+}
+
+.flash {
+    position: fixed;
+    top: 0;
+    right: 0;
+    background-color: #392d45;
+    color: #b0c9cf;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.server-entry {
+    border-radius: 5px;
+    background-color: #392d45;
+    cursor: pointer;
+}
+
+.server-entry-highlighted {
+    border-radius: 5px;
+    background-color: #b0c9cf;
+}
+
+.channel-entry {
+    border-radius: 5px;
+    background-color: #392d45;
+    cursor: pointer;
+}
+
+.channel-entry:hover {
+    border-radius: 5px;
+    background-color: #4e475b;
+}
+
+.channel-entry-highlighted {
+    border-radius: 5px;
+    background-color: #b0c9cf;
+}
+
+.selected {
+    background-color: #4e475b !important;
 }

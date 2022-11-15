@@ -10,20 +10,20 @@
             </div>
             <div class="login">
                 <form action="/login" method="POST">
-                    <input type="text" name="username" placeholder="Username" />
+                    <input type="text" name="username" placeholder="Username" required/>
                     <button type="submit" value="Login">Login</button>
                 </form>
             </div>
             <!-- Div for flashed messages -->
             {% with messages = get_flashed_messages() %}
                 {% if messages %}
-                    <div class="flash">
-                        {% for message in messages %}
-                            <p>{{ message }}</p>
-                        {% endfor %}
+                    <div id="hideondelay" class="flash">
+                        {% for message in messages %}<p>{{ message }}</p>{% endfor %}
                     </div>
                     <div>
-                        <p>Perhaps you would like to <a href="/register">register</a>?</p>
+                        <p>
+                            Perhaps you would like to <a href="/register">register</a>?
+                        </p>
                     </div>
                 {% endif %}
             {% endwith %}
