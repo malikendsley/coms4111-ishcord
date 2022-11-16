@@ -24,8 +24,31 @@
         $(".server-entry.selected").clone().appendTo("#channel-header");
       });
     </script>
+    <!-- Apply user preferences here -->
+    <style>
+      a, p, h1, h2 {
+        color: #{{ prefs['accent_color'] }}; !important;
+      }
+      div, .server-entry, .channel-entry {
+        background-color: #{{ prefs['primary_color'] }}; !important;
+      }
+      .top-divider {
+        border-bottom: 1px solid #{{ prefs['accent_color'] }}; !important;
+      }
+      .bottom-divider {
+        border-top: 1px solid #{{ prefs['accent_color'] }}; !important;
+      }
+      button {
+        background-color: #{{ prefs['accent_color'] }}; !important;
+        color: #{{ prefs['primary_color'] }}; !important;
+      }
+      button:hover {
+        filter: brightness(0.8); !important;
+      }
+    </style>
   </head>
   <body>
+    
     <div id="new-server-modal" class="modal-background">
       <div class="modal">
         <form class="create-form" action={{ "/api/" + request.cookies.get('uid') + "/create_server" }} method="POST">
@@ -49,7 +72,7 @@
           <button type="submit" id="create-server">Create Server</button>
           <button type="button"
                   id="cancel-server"
-                  onclick="document.getElementById('new-server-modal').style.display='none">
+                  onclick="document.getElementById('new-server-modal').style.display='none'">
             Cancel
           </button>
         </form>
@@ -78,7 +101,7 @@
           <button type="submit" id="create-channel">Create Channel</button>
           <button type="button"
                   id="cancel-server"
-                  onclick="document.getElementById('new-channel-modal').style.display='none">
+                  onclick="document.getElementById('new-channel-modal').style.display='none'">
             Cancel
           </button>
         </form>
@@ -115,16 +138,14 @@
         </div>
         <div class="bottom-divider">
           <button class="add-server-button"
-                  onclick="document.getElementById('new-server-modal').style.display='block">
+                  onclick="document.getElementById('new-server-modal').style.display='block'">
             New Server
           </button>
         </div>
       </div>
     </div>
     <div class="channel-column">
-      <div id="channel-header" class="top-divider">
-
-      </div>
+      <div id="channel-header" class="top-divider"></div>
       <div id="channel-list" class="channel-list">
         {% set data = g.conn.execute("SELECT cname, topic FROM channels_contains WHERE fid = %s;", server) %}
         {% for row in data %}
@@ -140,10 +161,10 @@
         </div>
         <div class="bottom-divider">
           {% if server %}
-          <button class="add-channel-button"
-                  onclick="document.getElementById('new-channel-modal').style.display='block">
-            New Channel
-          </button>
+            <button class="add-channel-button"
+                    onclick="document.getElementById('new-channel-modal').style.display='block'">
+              New Channel
+            </button>
           {% endif %}
         </div>
       </div>
@@ -173,10 +194,10 @@
       </div>
       <div class="user-list">
         {% set data =  g.conn.execute("select name from (select uid, name from member_of natural join users where member_of.fid = %s) as a where a.uid in (
-          select uid_sender as uid from friends_with 
-          where uid_receiver = %s and status = 'accepted'
-          union select uid_receiver from friends_with 
-          where uid_sender = %s and status = 'accepted');",server, uid, uid) %}
+        select uid_sender as uid from friends_with
+        where uid_receiver = %s and status = 'accepted'
+        union select uid_receiver from friends_with
+        where uid_sender = %s and status = 'accepted');",server, uid, uid) %}
         {% for row in data %}
           {% if name == row[0] %}
             <div class="you">
@@ -186,35 +207,33 @@
               <p>{{ row[0] }}</p>
             </div>
           {% endfor %}
-      </div>
-      <div class="top-divider">
+        </div>
+        <div class="top-divider">
           <h2>
             Users in Server
           </h2>
-      </div>
-      <div class="user-list">
-        {% set data = g.conn.execute("SELECT name FROM member_of NATURAL JOIN users WHERE fid = %s;", server).fetchall() %}
-        {% for row in data %}
-          {% if name == row[0] %}
-            <div class="you">
-            {% else %}
-              <div class="user">
-              {% endif %}
-              <p>
-                {{ row[0] }}
-              </p>
-            </div>
-          {% endfor %}
-      </div>
-      <div class="bottom-divider">
-        <form action="/logout">
-          <button class="add-channel-button"
-                  type="submit"
-                  onclick="">
-            Log Out
-          </button>
-        </form>
-      </div>
-    </div>
-  </body>
-</html>
+        </div>
+        <div class="user-list">
+          {% set data = g.conn.execute("SELECT name FROM member_of NATURAL JOIN users WHERE fid = %s;", server).fetchall() %}
+          {% for row in data %}
+            {% if name == row[0] %}
+              <div class="you">
+              {% else %}
+                <div class="user">
+                {% endif %}
+                <p>
+                  {{ row[0] }}
+                </p>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="bottom-divider">
+            <form action="/logout">
+              <button class="add-channel-button" type="submit" onclick="">
+                Log Out
+              </button>
+            </form>
+          </div>
+        </div>
+      </body>
+    </html>
