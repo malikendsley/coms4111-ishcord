@@ -7,10 +7,6 @@ a {
     color : #b0c9cf
 }
 
-a:hover {
-    color : #b0c9cf;
-}
-
 body {
     background-color: #392d45;
     font-family: 'Open Sans', sans-serif;
@@ -58,9 +54,7 @@ h3 {
 
 button {
     height: 50px;
-    background-color: #b0c9cf;
     border: none;
-    color: #392d45;
     padding: 15px 32px;
     text-align: center;
     text-decoration: none;
@@ -91,7 +85,6 @@ label {
 }
 
 input {
-    background-color: #b0c9cf;
     height: 50px;
     vertical-align: top;
     width: 60%;
@@ -101,7 +94,6 @@ input {
 
 .servers-column {
     width: 15%;
-    background-color: #231e29;
     display: flex;
     flex-direction: column;
     padding-left: 10px;
@@ -110,7 +102,6 @@ input {
 
 .channel-column {
     width: 15%;
-    background-color: #292132;
     display: flex;
     flex-direction: column;
     padding-left: 10px;
@@ -120,7 +111,6 @@ input {
 .content-area {
     height: 100%;
     width: 40%;
-    background-color: #392d45;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
@@ -130,7 +120,6 @@ input {
 
 .user-column {
     width: 20%;
-    background-color: #292132;
     display: flex;
     flex-direction: column;
     padding-left: 10px;
@@ -141,7 +130,8 @@ input {
     min-height: 15%;
     max-height: 15%;
     /* bottom border, text mint */
-    border-bottom: 1px solid #b0c9cf;
+    
+    filter: brightness(1.2);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -167,21 +157,25 @@ input {
 
 .channel-list {
     flex: auto;
+    filter: brightness(1.2);
 }
 
 .user-list {
     height: 27.5%;
     flex: auto;
     overflow-x: hidden;
+    filter: brightness(1.2);
 }
 
 .message-list {
     flex: auto;
+    filter: brightness(1.2);
 }
 
 .server-list {
     flex: auto;
     overflow-x: hidden;
+    filter: brightness(1.2);
 }
 
 .modal {
@@ -194,14 +188,13 @@ input {
     width: 70%;
     height: 70%;
     overflow: auto;
-    background-color: #392d45;
     
 }
 
 .modal-background {
     display: none;
     position: fixed;
-    z-index: 0.5;
+    z-index: 1;
     left: 0;
     top: 0;
     width: 100%;
@@ -236,7 +229,6 @@ input {
     position: fixed;
     top: 0;
     right: 0;
-    background-color: #392d45;
     color: #b0c9cf;
     padding: 10px;
     margin: 10px;
@@ -246,35 +238,21 @@ input {
 .server-entry {
     padding: 5%;
     margin-bottom: 5%;
-    background-color: #392d45;
     cursor: pointer;
-}
-
-.server-entry-highlighted {
-    background-color: #b0c9cf;
 }
 
 .channel-entry {
     padding: 5%;
     margin-bottom: 5%;
-    background-color: #392d45;
     cursor: pointer;
 }
 
 .channel-entry:hover {
-    background-color: #4e475b;
-}
-
-.channel-entry-highlighted {
-    background-color: #b0c9cf;
+    filter: brightness(1.2);
 }
 
 .selected {
-    background-color: #4e475b !important;
-}
-
-.user {
-    background-color: #392d45;
+    filter: brightness(1.2);
 }
 
 .user > p {
@@ -283,7 +261,7 @@ input {
 }
 
 .you {
-    background-color: #625075;
+    filter: brightness(1.6);
 }
 
 .you > p {
