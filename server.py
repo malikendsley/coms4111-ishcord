@@ -329,34 +329,29 @@ def create_channel(fid):
 	return redirect(f'/dashboard/{fid}/{cname}')
 
 # get all messages in a channel, long polling style
-@app.route('/api/<server>/<channel>/', methods=['GET'], defaults={'last': None})
 @app.route('/api/<server>/<channel>/<last>', methods=['GET'])
 def get_messages(server, channel, last):
-	print("User requested messages for channel:", channel, "on server:", server)
-	# get last message id
-	last_id = last
-	print("Last message id:", last_id)
-	# if last_id is None, set to 0
-	if last_id is None:
-		print("Last message id is None, setting to 0")
-		last_id = 0
+    
+	print(f"User {request.cookies.get('uid')} requested messages in {server}/{channel} since {last}")
+	
 	try:
 		while True:
-			# get all messages since last_id
-			cursor = g.conn.execute("SELECT name, body, timestamp, mid FROM messages_sends_appears_in NATURAL JOIN users WHERE fid = %s AND cname = %s AND mid > %s", server, channel, last_id)
+			# get all messages since last_id3
+			cursor = g.conn.execute("SELECT name, color, body, timestamp, mid FROM messages_sends_appears_in NATURAL JOIN users WHERE fid = %s AND cname = %s AND mid > %s", server, channel, last)
 			# if there are new messages, return them
 			if cursor.rowcount > 0:
 				print("Sending new messages")
 				messages = []
 				for row in cursor:
-					messages.append({'name': row[0], 'body': row[1], 'timestamp': row[2], 'mid': row[3]})
+					messages.append({'name': row[0], 'color': row[1], 'body': row[2], 'timestamp': row[3], 'mid': row[4]})
 				cursor.close()
 				return jsonify({'messages': messages})
 			# otherwise, wait for new messages
 			else:
 				#print("Waiting for new messages")
 				cursor.close()
-				time.sleep(1)
+				# increase this if sqlalchemy explodes
+				time.sleep(3)
 	except Exception as e:
 		print("Error getting messages:", e)
 		return jsonify({'success': False})

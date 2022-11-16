@@ -5,28 +5,41 @@ var server = document.cookie.split('; ').find(row => row.startsWith('server=')).
 var channel = document.cookie.split('; ').find(row => row.startsWith('channel=')).split('=')[1];
 
 //long poll the server for new messages
-async function getMessages() {
-    // if this is the first time the function is called, set the last message id to 0
-    var last = 0;
-    if (typeof getMessages.last !== 'undefined') {
-        last = getMessages.last;
-    }
-    console.log("endpoint: /api/" + server + "/" + channel + "/" + last);
-    // otherwise, set it to the last message id in the list
-    await fetch("/api/" + server + "/" + channel + "/" + last)
-        .then(response => response.json())
-        .then(data => {
-            console.log("Messages", data);
-            // for each message, create a new div with the details of the message
-            // and append it to the div with id "message-list"
-            for (let i = 0; i < data.length; i++) {
-                var message = data[i];
-                var messageDiv = document.createElement("div");
-                messageDiv.className = "message-entry";
-                messageDiv.innerHTML = "<h2>" + message.body + "</h2><p>" + message.content + "</p>";
-                document.getElementById("message-list").appendChild(messageDiv);
+async function getMessages(last) {
+    let response = await fetch("/api/" + server + "/" + channel + "/" + last);
+    if (response.status == 502) {
+        await getMessages(last);
+    } else if (response.status != 200) {
+        console.log("error");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await getMessages(last);
+    } else {
+        let data = await response.json();
+        if(data["success"] == false) {
+            console.log("error, retrying");
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await getMessages(last);
+        } else {
+        // get the highest mid in the json
+        lastmessageid = Math.max(...data["messages"].map(x => x["mid"]));
+        console.log("last message id: " + lastmessageid);
+        console.log(data);
+        //add messages to the page in reverse order
+        for (var i = data["messages"].length - 1; i >= 0; i--) {
+            var message = data["messages"][i];
+            var html = `
+                <div class="message" id="message-${message["mid"]}">
+                    <div style="color: #${message["color"]}">${message["name"]}</div>
+                    <div>${message["body"]}</div>
+                    <div>${message["timestamp"]}</div>
+                </div>
+                `
+            document.getElementById("message-list").innerHTML += html;
             }
-        })
+        console.log(lastmessageid);
+        await getMessages(lastmessageid);
+        }
+    }
 }
 
-//getMessages();
+getMessages(0);
