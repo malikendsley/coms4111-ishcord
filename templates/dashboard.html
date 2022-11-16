@@ -78,9 +78,10 @@
         </form>
       </div>
     </div>
+    {% if server is not none %}
     <div id="new-channel-modal" class="modal-background">
       <div class="modal">
-        <form class="create-form" action={{ "/api/" + request.cookies.get('uid') + "/create_channel" }} method="POST">
+        <form class="create-form" action={{ "/api/" + server + "/create_channel" }} method="POST">
           <h1>Create a new channel</h1>
           <label for="channel-name">
             <h2>Channel Name</h2>
@@ -107,6 +108,7 @@
         </form>
       </div>
     </div>
+    {% endif %}
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <div id="hideondelay" class="flash">
@@ -116,8 +118,12 @@
     {% endwith %}
     <div class="servers-column">
       <div class="top-divider">
-        <h2>Logged in as {{ name }}</h2>
-        <button class="profile-button">Profile</button>
+        <h2>Logged in as <h2 class="username">{{ name }}</h2></h2>
+        <form action={{"/profiles/" + request.cookies.get('uid')}}>
+          <button class="profile-button" type="submit" onclick="">
+            Profile
+          </button>
+        </form>
       </div>
       <div id="serverlist" class="server-list">
         {% set data = g.conn.execute("SELECT forums_administrates.name, forums_administrates.description, forums_administrates.fid
@@ -178,13 +184,13 @@
       </div>
       <div class="bottom-divider">
         <form class="message-form"
-              action="/api/<server>/<channel>/post"
+              action="/api/{{ server }}/{{ channel }}/post"
               method="POST">
           <input class="message-box"
                  type="text"
                  name="message"
                  placeholder="Type a message..."/>
-          <button class="send-button" type="submit" value="Send">Send</button>
+          <button class="send-button" type="submit" value='Send'>Send</button>
         </form>
       </div>
     </div>

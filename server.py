@@ -1,6 +1,5 @@
 import os
-import time
-
+import urllib
 # accessible as a variable in index.html:
 from sqlalchemy import *
 from flask import Flask, flash, jsonify, make_response, request, render_template, g, redirect, url_for
@@ -38,7 +37,7 @@ def teardown_request(exception):
 	try:
 		g.conn.close()
 	except Exception as e:
-		print("Conncetion closure exception:", e)
+		print("Connection closure exception:", e)
 
 # ===================== Utility functions ===================== #
 
@@ -78,10 +77,7 @@ def retrieve_prefs(uid):
 			""", uid)
 		prefs = cursor.fetchone()
 		columns = cursor.keys()
-		cursor.close()
 	except:
-		if cursor:
-			cursor.close()
 		return None
 	return dict(zip(columns, prefs))
 # ============== These functions serve pages ================== #
@@ -108,7 +104,6 @@ def register():
 		cursor = g.conn.execute("SELECT * FROM users WHERE name = %s", name)
 		if cursor.rowcount > 0:
 			raise Exception("Username already taken")
-		cursor.close()
 		# create new user and default theme, redirect to dashboard
 		cursor = g.conn.execute("""
             BEGIN;
@@ -121,7 +116,6 @@ def register():
 		cursor = g.conn.execute("SELECT uid FROM users WHERE name = %s", name)
 		uid = cursor.fetchone()[0]
 		
-		cursor.close()
 
 	except Exception as e:
 		print(f"Registration error: {e}")
@@ -130,8 +124,8 @@ def register():
   
 	print(f"User {name} registered with uid {uid} successfully")
 	resp = make_response(redirect(url_for('dashboard')))
-	resp.set_cookie('uid', str(uid))
-	resp.set_cookie('name', name)
+	resp.set_cookie('uid', urllib.parse.quote(uid))
+	resp.set_cookie('name', urllib.parse.quote(name))
 	flash(f"Welcome, {name}!")
 	return resp
 
@@ -157,20 +151,17 @@ def login():
 		cursor = g.conn.execute("SELECT name FROM users WHERE name = %s", name)
 		if cursor.rowcount == 0:
 			flash('Username does not exist')
-			cursor.close()
 			return redirect('/login')
 		# log in user, go to dashboard
 		else:
 			print("Logging in as " + name)
 			# close cursor
-			cursor.close()
 			# get uid of user, set cookie
 			cursor = g.conn.execute("SELECT (uid) FROM users WHERE name = %s", name)
 			uid = cursor.fetchone()[0]
-			cursor.close()
 			resp = make_response(redirect('/dashboard'))
-			resp.set_cookie('name', name)
-			resp.set_cookie('uid', str(uid))
+			resp.set_cookie('name', urllib.parse.quote(name))
+			resp.set_cookie('uid', urllib.parse.quote(str(uid)))
 			return resp
 
 @app.route('/dashboard', methods=['GET'], defaults={'server': None, 'channel': None})
@@ -187,13 +178,15 @@ def dashboard(server, channel):
 	# if server and channel are specified, set cookies
 	if server and not channel:
 		resp = make_response(render_template('dashboard.html', name=request.cookies.get('name'), server=server, channel="general", uid=request.cookies.get('uid'), prefs=prefs))
-		resp.set_cookie('server', server)
+		resp.set_cookie('server', urllib.parse.quote(server))
 		resp.set_cookie('channel', "general")
 		return resp
 	if server and channel:
 		resp = make_response(render_template('dashboard.html', name=request.cookies.get('name'), server=server, channel=channel, uid=request.cookies.get('uid'), prefs=prefs))
 		resp.set_cookie('server', server)
-		resp.set_cookie('channel', str(channel))
+		print(f"Setting channel cookie to {channel}")
+		# url encode channel name
+		resp.set_cookie('channel', urllib.parse.quote(channel))
 		return resp
 	# if not, just show dashboard
 	else:
@@ -219,9 +212,9 @@ def logout():
 	resp.set_cookie('channel', '', expires=0)
 	return resp
 
-@app.route('/profile', methods=['GET'])
+@app.route('/profiles/<uid>', methods=['GET'])
 @login_required	
-def profile():
+def profile(uid):
 	print("User visited profile page")
 
 	prefs = retrieve_prefs(request.cookies.get('uid'))
@@ -230,6 +223,49 @@ def profile():
 		return redirect(url_for('dashboard'))
 	print(f"User preferences: {prefs}")
 	return render_template('profile.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs)
+
+@app.route('/profiles/<uid>/themes', methods=['GET'])
+@login_required
+def themes(uid):
+	print("User visited themes page")
+	prefs = retrieve_prefs(request.cookies.get('uid'))
+	if not prefs:
+		flash("Error retrieving user preferences")
+		return redirect(url_for('dashboard'))
+	print(f"User preferences: {prefs}")
+	return render_template('themes.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs)
+
+@app.route('/profiles/<uid>/moderation', methods=['GET'])
+@login_required
+def moderation_landing(uid):
+	print("User visited moderation page")
+	prefs = retrieve_prefs(request.cookies.get('uid'))
+	if not prefs:
+		flash("Error retrieving user preferences")
+		return redirect(url_for('dashboard'))
+	print(f"User preferences: {prefs}")
+	return render_template('moderation.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs)
+
+@app.route('/profiles/<uid>/moderation/<fid>', methods=['GET'])
+@login_required
+def moderate_server(uid, fid):
+	print("User visited moderation page")
+	prefs = retrieve_prefs(request.cookies.get('uid'))
+	if not prefs:
+		flash("Error retrieving user preferences")
+		return redirect(url_for('dashboard'))
+	print(f"User preferences: {prefs}")
+	return render_template('moderation.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), server=fid, prefs=prefs)
+
+@app.route('/profiles/<uid>/friends', methods=['GET'])
+def friends(uid):
+	print("User visited friends page")
+	prefs = retrieve_prefs(request.cookies.get('uid'))
+	if not prefs:
+		flash("Error retrieving user preferences")
+		return redirect(url_for('dashboard'))
+	print(f"User preferences: {prefs}")
+	return render_template('friends.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs)
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -252,12 +288,14 @@ def post(server, channel):
 	# insert into db
 	print("User posted message:", body, "to", fid, cname)
 	try:
+
 		g.conn.execute("INSERT INTO messages_sends_appears_in (body, uid, fid, cname) VALUES (%s, %s, %s, %s)", body, uid, fid, cname)
-		print("New message posted:", body, uid, fid, cname)
-		return jsonify({'success': True})
+		print(f"Message {body} posted successfully in {fid} / {cname} by {uid}")
+		return redirect(url_for('dashboard', server=server, channel=channel))
 	except Exception as e:
 		print("Error posting message:", e)
-		return jsonify({'success': False})
+		flash("Error posting message")
+		return redirect(url_for('dashboard', server=server, channel=channel))
 
 # create a new server
 @app.route('/api/<uid>/create_server', methods=['POST'])
@@ -272,11 +310,9 @@ def create_server(uid):
 		# check if server exists
 		cursor = g.conn.execute("SELECT name FROM forums_administrates WHERE name = %s", server_name)
 		if cursor.rowcount > 0:
-			cursor.close()
 			raise Exception("Server already exists")
 		# try to setup server
 		else:
-			cursor.close()
 			# TOOD: implement image URI
 			nextfid = g.connn.execute("select nextval('forums_administrates_fid_seq')").fetchone()[0]
 			if nextfid is None:
@@ -310,11 +346,9 @@ def create_channel(fid):
 		# check if channel exists
 		cursor = g.conn.execute("SELECT cname FROM channels_contains WHERE cname = %s AND fid = %s", name, fid)
 		if cursor.rowcount > 0:
-			cursor.close()
 			raise Exception("Channel already exists")
 		# create channel
 		else:
-			cursor.close()
 			g.conn.execute("INSERT INTO channels_contains (cname, topic, fid) VALUES (%s, %s, %s)", name, topic, fid)
 			print("New channel created")
 		# get cname of new channel
@@ -333,25 +367,21 @@ def create_channel(fid):
 def get_messages(server, channel, last):
     
 	print(f"User {request.cookies.get('uid')} requested messages in {server}/{channel} since {last}")
-	
 	try:
-		while True:
-			# get all messages since last_id3
-			cursor = g.conn.execute("SELECT name, color, body, timestamp, mid FROM messages_sends_appears_in NATURAL JOIN users WHERE fid = %s AND cname = %s AND mid > %s", server, channel, last)
-			# if there are new messages, return them
-			if cursor.rowcount > 0:
-				print("Sending new messages")
-				messages = []
-				for row in cursor:
-					messages.append({'name': row[0], 'color': row[1], 'body': row[2], 'timestamp': row[3], 'mid': row[4]})
-				cursor.close()
-				return jsonify({'messages': messages})
-			# otherwise, wait for new messages
-			else:
-				#print("Waiting for new messages")
-				cursor.close()
-				# increase this if sqlalchemy explodes
-				time.sleep(3)
+		# get all messages since last_id3
+		cursor = g.conn.execute("SELECT name, color, body, timestamp, mid FROM messages_sends_appears_in NATURAL JOIN users WHERE fid = %s AND cname = %s AND mid > %s ORDER BY timestamp DESC", server, channel, last)
+		# if there are new messages, return them
+		if cursor.rowcount > 0:
+			print("Sending new messages")
+			messages = []
+			for row in cursor:
+				messages.append({'name': row[0], 'color': row[1], 'body': row[2], 'timestamp': row[3], 'mid': row[4]})
+			return jsonify({'messages': messages})
+		# otherwise, wait for new messages
+		else:
+			#print("Waiting for new messages")
+			# increase this if sqlalchemy explodes
+			return jsonify({'messages': []})
 	except Exception as e:
 		print("Error getting messages:", e)
 		return jsonify({'success': False})

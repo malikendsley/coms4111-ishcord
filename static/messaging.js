@@ -1,11 +1,13 @@
 //long poll the server for new messages
 
-//assemble endpoint from cookies
-var server = document.cookie.split('; ').find(row => row.startsWith('server=')).split('=')[1];
-var channel = document.cookie.split('; ').find(row => row.startsWith('channel=')).split('=')[1];
+
 
 //long poll the server for new messages
 async function getMessages(last) {
+    // if channel contains special characters, encode it
+    var server = document.cookie.split('; ').find(row => row.startsWith('server=')).split('=')[1];
+    var channel = document.cookie.split('; ').find(row => row.startsWith('channel=')).split('=')[1];
+    
     let response = await fetch("/api/" + server + "/" + channel + "/" + last);
     if (response.status == 502) {
         await getMessages(last);
@@ -15,6 +17,12 @@ async function getMessages(last) {
         await getMessages(last);
     } else {
         let data = await response.json();
+        console.log(data);
+        if (data["messages"].length == 0) {
+            console.log("No new messages, waiting 1 second");
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await getMessages(last);
+        }
         if(data["success"] == false) {
             console.log("error, retrying");
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -37,6 +45,8 @@ async function getMessages(last) {
             document.getElementById("message-list").innerHTML += html;
             }
         console.log(lastmessageid);
+        // scroll to bottom of div with id 'message-list'
+        document.getElementById("message-list").scrollTop = document.getElementById("message-list").scrollHeight;
         await getMessages(lastmessageid);
         }
     }

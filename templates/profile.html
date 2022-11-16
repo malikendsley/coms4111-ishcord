@@ -1,0 +1,44 @@
+<!-- Profile page -->
+<html>
+    <head>
+        <title>Profile</title>
+        <link rel="stylesheet" type="text/css" href={{ url_for("static", filename="style.css")}} />
+        <style>
+            a, p, h1, h2 {
+              color: #{{ prefs['accent_color'] }}; !important;
+            }
+            div, .server-entry, .channel-entry {
+              background-color: #{{ prefs['primary_color'] }}; !important;
+            }
+            .top-divider {
+              border-bottom: 1px solid #{{ prefs['accent_color'] }}; !important;
+            }
+            .bottom-divider {
+              border-top: 1px solid #{{ prefs['accent_color'] }}; !important;
+            }
+            button {
+              background-color: #{{ prefs['accent_color'] }}; !important;
+              color: #{{ prefs['primary_color'] }}; !important;
+            }
+            button:hover {
+              filter: brightness(0.8); !important;
+            }
+        </style>
+    </head>
+    <body>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div id="hideondelay" class="flash">
+                    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <div style="width: 15%; height: 100%;">
+            <button onclick="window.location.href='{{ url_for('themes', uid=request.cookies.get('uid'))}}'">Theme Profiles</button>
+            <button onclick="window.location.href='{{ url_for('friends', uid=request.cookies.get('uid')) }}'">Friends List</button>
+            <button onclick="window.location.href='{{ url_for('moderation_landing', uid=request.cookies.get('uid')) }}'">Moderation</button>
+        </div>
+        <div style="width: 15%; height: 100%"></div>
+        <div style="width: 50%; height: 100%"></div>
+        <div style="width: 20%; height: 100%"></div>
+    </body>
