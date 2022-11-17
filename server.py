@@ -637,7 +637,7 @@ def remove_user(fid):
 			raise Exception("User is not in server")
 
 		# check if user is owner
-		cursor = g.conn.execute("SELECT uid FROM owns WHERE uid = %s AND fid = %s", uid, fid)
+		cursor = g.conn.execute("SELECT uid FROM forums_administrates WHERE uid = %s AND fid = %s", uid, fid)
 		if cursor.rowcount > 0:
 			raise Exception("User is owner of server")
 
@@ -654,6 +654,31 @@ def remove_user(fid):
 	print(f"User {uid} removed from server {fid}")
 	flash("User removed from server successfully")
 	return redirect(url_for('moderate_server', uid=request.cookies.get('uid'), fid=fid))
+
+# delete a server
+@app.route('/api/<fid>/delete_server', methods=['POST'])
+def delete_server(fid):
+	print(f"User {request.cookies.get('uid')} try delete server {fid}")
+ 
+	try:
+		# check if server exists
+		cursor = g.conn.execute("SELECT fid FROM forums_administrates WHERE fid = %s", fid)
+		if cursor.rowcount == 0:
+			raise Exception("Server does not exist")
+
+		# delete server
+		else:
+			g.conn.execute("DELETE FROM forums_administrates WHERE fid = %s", fid)
+			print("Server deleted")
+
+	except Exception as e:
+		print(f"Error deleting server: {e}")
+		flash(f"Error deleting server: {str(e)}")
+		return redirect(url_for('dashboard', uid=request.cookies.get('uid')))
+
+	print(f"Server {fid} deleted")
+	flash("Server deleted successfully")
+	return redirect(url_for('dashboard', uid=request.cookies.get('uid')))
 
 if __name__ == "__main__":
 	import click
