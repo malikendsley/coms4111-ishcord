@@ -434,6 +434,34 @@ def get_messages(server, channel, last):
 		print("Error getting messages:", e)
 		return jsonify({'success': False})
 
+@app.route('/api/<uid>/new_theme', methods=['POST'])
+def create_theme(uid):
+	# get form data
+	theme_name = request.form['theme-name']
+	theme_color = request.form['accent-color'][1:]
+	theme_accent = request.form['primary-color'][1:]
+	line_spacing = request.form['line-spacing']
+
+	print(f"User {uid} try create theme:", theme_name, theme_color, theme_accent, line_spacing)
+ 
+	try:
+		# check if theme exists
+		cursor = g.conn.execute("SELECT name FROM theme_profiles_creates WHERE name = %s AND uid = %s", theme_name, uid)
+		if cursor.rowcount > 0:
+			raise Exception("Theme already exists")
+		# create theme
+		else:
+			g.conn.execute("INSERT INTO theme_profiles_creates (name, accent_color, primary_color, line_spacing, uid) VALUES (%s, %s, %s, %s, %s)", theme_name, theme_color, theme_accent, line_spacing, uid)
+			print("New theme created")
+	except Exception as e:
+		print(f"Error creating theme: {e}")
+		flash(f"Error creating theme: {str(e)}")
+		return redirect(url_for('themes', uid=uid))
+
+	print(f"Theme {theme_name} created")
+	flash("Theme created successfully")
+	return redirect(url_for('themes', uid=uid))
+
 if __name__ == "__main__":
 	import click
 
