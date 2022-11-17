@@ -1,0 +1,24 @@
+<html>
+    <head>
+        <title>Moderation</title>
+        <link rel="stylesheet" type="text/css" href={{ url_for("static", filename="style.css")}} />
+        {% include "style-applicator.html" %}
+    </head>
+    <body>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div id="hideondelay" class="flash">
+                    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        {% include "profile-sidebar.html" %}
+        <div style="width: 80%;">
+            <div class="top-divider" style="border: none; margin: 0;">
+                <h1>Server Moderation</h1>
+            </div>
+            <div style="height: 85%; overflow-x: hidden; filter: brightness(0.8);">
+                {{ data }}
+            </div>
+        </div>
+    </body>

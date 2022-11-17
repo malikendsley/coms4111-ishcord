@@ -2,7 +2,9 @@
   <head>
     <title>The Writing on the Wall</title>
     <link rel="stylesheet" type="text/css" href={{ url_for("static", filename="style.css")}} />
+    {% if channel is not none %}
     <script src={{ url_for("static", filename="messaging.js")}} defer></script>
+    {% endif %}
     <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
     <script>
       // after page load, attach onclick handlers to the divs in the server-list
@@ -22,30 +24,22 @@
         });
         // copy selected server div into div with id "channel-header"
         $(".server-entry.selected").clone().appendTo("#channel-header");
+        // make the private checkbox show the capacity input when checked, and show the permalink input when unchecked
+        $("#private").change(function() {
+          if (this.checked) {
+            console.log("checked");
+            $("#capacity").show();
+            $("#permalink").hide();
+          } else {
+            console.log("unchecked");
+            $("#capacity").hide();
+            $("#permalink").show();
+          }
+        });
       });
     </script>
     <!-- Apply user preferences here -->
-    <style>
-      a, p, h1, h2 {
-        color: #{{ prefs['accent_color'] }}; !important;
-      }
-      div, .server-entry, .channel-entry {
-        background-color: #{{ prefs['primary_color'] }}; !important;
-      }
-      .top-divider {
-        border-bottom: 1px solid #{{ prefs['accent_color'] }}; !important;
-      }
-      .bottom-divider {
-        border-top: 1px solid #{{ prefs['accent_color'] }}; !important;
-      }
-      button {
-        background-color: #{{ prefs['accent_color'] }}; !important;
-        color: #{{ prefs['primary_color'] }}; !important;
-      }
-      button:hover {
-        filter: brightness(0.8); !important;
-      }
-    </style>
+    {% include "style-applicator.html" %}
   </head>
   <body>
     
@@ -69,6 +63,29 @@
                  name="server-description"
                  placeholder="Server Description"
                  required/>
+          <label for="private">
+            <h2>Private Server?</h2>
+          </label>
+          <input type="checkbox"
+                 id="private"
+                 name="private"
+                 value="private"/>
+          <div id="capacity" style="display: none;">
+            <label for="capacity">
+              <h2>Capacity (Max 1000)</h2>
+            </label>
+            <input type="number"     
+                 name="capacity"
+                 placeholder="Capacity"/>
+          </div>
+          <div id="permalink">
+            <label for="permalink">
+              <h2>Permalink (Max Length 16)</h2>
+          </label>
+          <input type="text"
+                 name="permalink"
+                 placeholder="Permalink"/>
+          </div>
           <button type="submit" id="create-server">Create Server</button>
           <button type="button"
                   id="cancel-server"
@@ -118,7 +135,8 @@
     {% endwith %}
     <div class="servers-column">
       <div class="top-divider">
-        <h2>Logged in as <h2 class="username">{{ name }}</h2></h2>
+        <h3 style="overflow-wrap: break-word;">Logged in as</h3>
+        <h3 style="overflow-wrap: break-word;">{{ name }}</h3>
         <form action={{"/profiles/" + request.cookies.get('uid')}}>
           <button class="profile-button" type="submit" onclick="">
             Profile

@@ -1,0 +1,38 @@
+<style>
+    a, p, h1, h2, h3 {
+      color: #{{ prefs['accent_color'] }}; !important;
+      text-shadow: 1px 1px #000000;
+    }
+    p {
+      font-size: {{ prefs['text_size'] }}px; !important;
+      text-shadow: 1px 1px #000000;
+    }
+    h1 {
+      font-size: {{ prefs['text_size'] * 3 }}px; !important;
+      text-shadow: 1px 1px #000000;
+    }
+    h2 {
+      font-size: {{ prefs['text_size'] * 2 }}px; !important;
+      text-shadow: 1px 1px #000000;
+    }
+    h3 {
+      font-size: {{ prefs['text_size'] * 1.5 }}px; !important;
+      text-shadow: 1px 1px #000000;
+    }
+    div, .server-entry, .channel-entry {
+      background-color: #{{ prefs['primary_color'] }}; !important;
+    }
+    .top-divider {
+      border-bottom: 1px solid #{{ prefs['accent_color'] }}; !important;
+    }
+    .bottom-divider {
+      border-top: 1px solid #{{ prefs['accent_color'] }}; !important;
+    }
+    button {
+      background-color: #{{ prefs['accent_color'] }}; !important;
+      color: #{{ prefs['primary_color'] }}; !important;
+    }
+    button:hover {
+      filter: brightness(0.8); !important;
+    }
+  </style>

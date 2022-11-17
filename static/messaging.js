@@ -37,9 +37,9 @@ async function getMessages(last) {
             var message = data["messages"][i];
             var html = `
                 <div class="message" id="message-${message["mid"]}">
-                    <div style="color: #${message["color"]}">${message["name"]}</div>
-                    <div>${message["body"]}</div>
-                    <div>${message["timestamp"]}</div>
+                    <h3 style="color: #${message["color"]}; text-shadow: 1px 1px #000000;">${message["name"]}</p>
+                    <p style="overflow-wrap: break-word;">${message["body"]}</p>
+                    <p>${message["timestamp"]}</p>
                 </div>
                 `
             document.getElementById("message-list").innerHTML += html;

@@ -71,9 +71,9 @@ def retrieve_prefs(uid):
     	# retrieve preferences from db
 	try:
 		cursor = g.conn.execute("""
-			select color as user_color, text_size, primary_color, accent_color, line_spacing 
-   			from users, theme_profiles_creates where theme_profiles_creates.uid = %s 
-      		and theme_profiles_creates.name = current_theme;
+		select P.name as theme_name, color as user_color, text_size, primary_color, accent_color, line_spacing 
+		from theme_profiles_creates as P left join users as U on U.uid = P.uid 
+  		where P.name = U.current_theme and U.uid = %s;
 			""", uid)
 		prefs = cursor.fetchone()
 		columns = cursor.keys()
@@ -124,7 +124,8 @@ def register():
   
 	print(f"User {name} registered with uid {uid} successfully")
 	resp = make_response(redirect(url_for('dashboard')))
-	resp.set_cookie('uid', urllib.parse.quote(uid))
+	print(uid)
+	resp.set_cookie('uid', str(uid))
 	resp.set_cookie('name', urllib.parse.quote(name))
 	flash(f"Welcome, {name}!")
 	return resp
@@ -222,7 +223,7 @@ def profile(uid):
 		flash("Error retrieving user preferences")
 		return redirect(url_for('dashboard'))
 	print(f"User preferences: {prefs}")
-	return render_template('profile.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs)
+	return render_template('profile.html', name=request.cookies.get('name'), uid=uid, prefs=prefs)
 
 @app.route('/profiles/<uid>/themes', methods=['GET', 'POST'])
 @login_required
@@ -282,28 +283,115 @@ def edit_theme(uid):
 		flash("Theme updated")
 		return redirect(url_for('themes', uid=uid))
 
-  # 
 @app.route('/profiles/<uid>/moderation', methods=['GET'])
 @login_required
 def moderation_landing(uid):
 	print("User visited moderation page")
 	prefs = retrieve_prefs(request.cookies.get('uid'))
+	# get list of servers user is admin of
+	try:
+		cursor = g.conn.execute("""
+			SELECT fid, name, created, description FROM forums_administrates WHERE uid = %s
+  			""", uid)
+		servers = []
+		for row in cursor:
+			servers.append({'fid': row[0], 'name': row[1], 'created': row[2], 'description': row[3]})
+	except Exception as e:
+		print(f"Error retrieving servers user {uid}")
+		flash("Error retrieving servers")
+		return redirect(url_for('dashboard', uid=uid))
 	if not prefs:
 		flash("Error retrieving user preferences")
 		return redirect(url_for('dashboard'))
 	print(f"User preferences: {prefs}")
-	return render_template('moderation.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs)
+	return render_template('moderation.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs, servers=servers)
 
 @app.route('/profiles/<uid>/moderation/<fid>', methods=['GET'])
 @login_required
 def moderate_server(uid, fid):
+	data = {}
+	# check that the user is an admin of the server
+	if request.cookies.get('uid') != uid:
+		flash("You are not authorized to view this page")
+		return redirect(url_for('dashboard', uid=uid))
+
+	# get server info
+	server = []
+	try:
+		cursor = g.conn.execute("""
+			SELECT fid, name, created, description FROM forums_administrates WHERE fid = %s;
+        	""", fid)
+		for row in cursor:
+			server.append({'fid': row[0], 'name': row[1], 'created': row[2], 'description': row[3]})
+	except Exception as e:
+		print(f"Error retrieving server info: {e}")
+		flash("Error retrieving server info")
+		return redirect(url_for('moderation_landing', uid=uid))
+	# get list of users in server
+	users = []
+	try:
+		cursor = g.conn.execute("""
+			SELECT name, uid FROM member_of NATURAL JOIN users WHERE fid = %s;
+   			""", fid)
+		for row in cursor:
+			users.append({'name': row[0], 'uid': row[1]})
+	except Exception as e:
+		print(f"Error retrieving users in server: {e}")
+		flash("Error retrieving users in server")
+		return redirect(url_for('moderation_landing', uid=uid))
+
+	# get list of channels in server
+	channels = []
+	try:
+		cursor = g.conn.execute("""
+			SELECT cname, topic FROM channels_contains WHERE fid = %s;
+        """, fid)
+		for row in cursor:
+			channels.append({'cname': row[0], 'topic': row[1]})
+	except Exception as e:
+		print(f"Error retrieving channels in server: {e}")
+		flash("Error retrieving channels in server")
+		return redirect(url_for('moderation_landing', uid=uid))
+
+	# get list of users by post frequency
+	users_posts = []
+ 
+	try:
+		cursor = g.conn.execute("""
+			select name, COUNT(*) from messages_sends_appears_in natural join users where fid = %s group by name order by count desc; """, fid)
+		for row in cursor:
+			users_posts.append({'name': row[0], 'count': row[1]})
+	except Exception as e:
+		print(f"Error retrieving users by post frequency: {e}")
+		flash("Error retrieving users by post frequency")
+		return redirect(url_for('moderation_landing', uid=uid))
+
+	# get list of users by average post length
+	users_avg_post_length = []
+	try:
+		cursor = g.conn.execute("""
+			select name, AVG(length(body)) from messages_sends_appears_in natural join users where fid = %s group by name order by avg desc; """, fid)
+		for row in cursor:
+			users_avg_post_length.append({'name': row[0], 'avg': row[1]})
+	except Exception as e:
+		print(f"Error retrieving users by average post length: {e}")
+		flash("Error retrieving users by average post length")
+		return redirect(url_for('moderation_landing', uid=uid))
+
+	# assemble lists into data dictionary
+	data['server'] = server
+	data['users'] = users
+	data['channels'] = channels
+	data['users_posts'] = users_posts
+	data['users_avg_post_length'] = users_avg_post_length
+ 
 	print("User visited moderation page")
 	prefs = retrieve_prefs(request.cookies.get('uid'))
 	if not prefs:
 		flash("Error retrieving user preferences")
 		return redirect(url_for('dashboard'))
 	print(f"User preferences: {prefs}")
-	return render_template('moderation.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), server=fid, prefs=prefs)
+	return render_template('moderation-server.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), server=fid, prefs=prefs, data=data)
 
 @app.route('/profiles/<uid>/friends', methods=['GET'])
 def friends(uid):
@@ -351,6 +439,8 @@ def create_server(uid):
 	# get details
 	server_name = request.form['server-name']
 	server_desc = request.form['server-description']
+	is_private = True if 'private' in request.form else False
+    
 
 	print(f"User {uid} try create server:", server_name, server_desc)
 	# insert into db
@@ -361,21 +451,38 @@ def create_server(uid):
 			raise Exception("Server already exists")
 		# try to setup server
 		else:
-			# TOOD: implement image URI
-			nextfid = g.connn.execute("select nextval('forums_administrates_fid_seq')").fetchone()[0]
-			if nextfid is None:
-				raise Exception("Error getting next fid")
-			g.conn.execute("""
-				BEGIN;
-    			INSERT INTO forums_administrates (name, description, uid) VALUES (%s, %s, %s);
-				INSERT INTO channels_contains (cname, topic, fid) VALUES ('general', "general chat goes here", %s);
-            	INSERT INTO member_of (uid, fid) VALUES (%s, %s);
-				COMMIT;
-              	""", 
-          		server_name, server_desc, uid, nextfid, uid, nextfid)
-			print(f"Server named {server_name} created, general channel created, user {uid} added to server")
+			# if server is private, run this query
+			if not is_private:
+				print("Private server")
+				permalink = request.form['permalink']
+				print(f"Permalink {permalink}")
+				g.conn.execute("""
+					BEGIN;
+					INSERT INTO forums_administrates (name, description, uid) VALUES (%s, %s, %s);
+					INSERT INTO channels_contains (cname, topic, fid) VALUES ('general', 'general chat goes here', currval('forums_administrates_fid_seq'));
+					INSERT INTO public_forums (fid, permalink) VALUES (currval('forums_administrates_fid_seq'), %s);
+     				INSERT INTO member_of (uid, fid) VALUES (%s, currval('forums_administrates_fid_seq'));
+					COMMIT;
+					""", 
+					server_name, server_desc, uid, permalink, uid)
+				print(f"Public server named {server_name} created, general channel created, user {uid} added to server")
+			else:
+				print("Public server")
+				capacity = request.form['capacity']
+				print(f"Capacity: {capacity}")
+				# if server is public, run this query
+				g.conn.execute("""
+					BEGIN;
+					INSERT INTO forums_administrates (name, description, uid) VALUES (%s, %s, %s);
+					INSERT INTO channels_contains (cname, topic, fid) VALUES ('general', 'general chat goes here', currval('forums_administrates_fid_seq'));
+					INSERT INTO private_forums (fid, capacity) VALUES (currval('forums_administrates_fid_seq'), %s);
+					INSERT INTO member_of (uid, fid) VALUES (%s, currval('forums_administrates_fid_seq'));
+					COMMIT;
+					""", 
+					server_name, server_desc, uid, capacity, uid)
+				print(f"Private server named {server_name} created, general channel created, user {uid} added to server")
 	except Exception as e:
-		print("Error creating server:", e)
+		print("Error creating server:", str(e.args))
 		flash(f"Error creating server: {str(e)}")
 		return redirect('/dashboard')
 
@@ -434,6 +541,7 @@ def get_messages(server, channel, last):
 		print("Error getting messages:", e)
 		return jsonify({'success': False})
 
+# create a new theme
 @app.route('/api/<uid>/new_theme', methods=['POST'])
 def create_theme(uid):
 	# get form data
@@ -441,7 +549,7 @@ def create_theme(uid):
 	theme_color = request.form['accent-color'][1:]
 	theme_accent = request.form['primary-color'][1:]
 	line_spacing = request.form['line-spacing']
-
+	text_size = request.form['font-size']
 	print(f"User {uid} try create theme:", theme_name, theme_color, theme_accent, line_spacing)
  
 	try:
@@ -451,7 +559,7 @@ def create_theme(uid):
 			raise Exception("Theme already exists")
 		# create theme
 		else:
-			g.conn.execute("INSERT INTO theme_profiles_creates (name, accent_color, primary_color, line_spacing, uid) VALUES (%s, %s, %s, %s, %s)", theme_name, theme_color, theme_accent, line_spacing, uid)
+			g.conn.execute("INSERT INTO theme_profiles_creates (name, text_size, accent_color, primary_color, line_spacing, uid) VALUES (%s, %s, %s, %s, %s, %s)", theme_name, text_size, theme_color, theme_accent, line_spacing, uid)
 			print("New theme created")
 	except Exception as e:
 		print(f"Error creating theme: {e}")
@@ -461,6 +569,91 @@ def create_theme(uid):
 	print(f"Theme {theme_name} created")
 	flash("Theme created successfully")
 	return redirect(url_for('themes', uid=uid))
+
+# delete a theme
+@app.route('/api/<uid>/delete_theme', methods=['POST'])
+def delete_theme(uid):
+	# get form data
+	theme_name = request.form['theme']
+
+	print(f"User {uid} try delete theme:", theme_name)
+ 
+	try:
+		# check if theme exists
+		cursor = g.conn.execute("SELECT name FROM theme_profiles_creates WHERE name = %s AND uid = %s", theme_name, uid)
+		if cursor.rowcount == 0:
+			raise Exception("Theme does not exist")
+		# delete theme
+		else:
+			g.conn.execute("DELETE FROM theme_profiles_creates WHERE name = %s AND uid = %s", theme_name, uid)
+			print("Theme deleted")
+	except Exception as e:
+		print(f"Error deleting theme: {e}")
+		flash(f"Error deleting theme: {str(e)}")
+		return redirect(url_for('themes', uid=uid))
+
+	print(f"Theme {theme_name} deleted")
+	flash("Theme deleted successfully")
+	return redirect(url_for('themes', uid=uid))
+
+# delete a channel
+@app.route('/api/<fid>/delete_channel', methods=['POST'])
+def delete_channel(fid):
+	# get form data
+	cname = request.form['channel']
+
+	print(f"User {request.cookies.get('uid')} try delete channel:", cname)
+ 
+	try:
+		# check if channel exists
+		cursor = g.conn.execute("SELECT cname FROM channels_contains WHERE cname = %s AND fid = %s", cname, fid)
+		if cursor.rowcount == 0:
+			raise Exception("Channel does not exist")
+		# delete channel
+		else:
+			g.conn.execute("DELETE FROM channels_contains WHERE cname = %s AND fid = %s", cname, fid)
+			print("Channel deleted")
+	except Exception as e:
+		print(f"Error deleting channel: {e}")
+		flash(f"Error deleting channel: {str(e)}")
+		return redirect(f'/dashboard/{fid}')
+
+	print(f"Channel {cname} deleted")
+	flash("Channel deleted successfully")
+	return redirect(url_for('moderate_server', uid=request.cookies.get('uid'), fid=fid))
+
+# remove a user from a server
+@app.route('/api/<fid>/remove_user', methods=['POST'])
+def remove_user(fid):
+	# get form data
+	uid = request.form['uid']
+
+	print(f"User {request.cookies.get('uid')} try remove user {uid} from server {fid}")
+ 
+	try:
+		# check if user is in channel
+		cursor = g.conn.execute("SELECT uid FROM member_of WHERE uid = %s AND fid = %s", uid, fid)
+		if cursor.rowcount == 0:
+			raise Exception("User is not in server")
+
+		# check if user is owner
+		cursor = g.conn.execute("SELECT uid FROM owns WHERE uid = %s AND fid = %s", uid, fid)
+		if cursor.rowcount > 0:
+			raise Exception("User is owner of server")
+
+		# remove user
+		else:
+			g.conn.execute("DELETE FROM member_of WHERE uid = %s AND fid = %s", uid, fid)
+			print("User removed")
+
+	except Exception as e:
+		print(f"Error removing user from server: {e}")
+		flash(f"Error removing user from server: {str(e)}")
+		return redirect(url_for('moderate_server', uid=request.cookies.get('uid'), fid=fid))
+
+	print(f"User {uid} removed from server {fid}")
+	flash("User removed from server successfully")
+	return redirect(url_for('moderate_server', uid=request.cookies.get('uid'), fid=fid))
 
 if __name__ == "__main__":
 	import click
