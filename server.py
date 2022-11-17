@@ -224,17 +224,65 @@ def profile(uid):
 	print(f"User preferences: {prefs}")
 	return render_template('profile.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs)
 
-@app.route('/profiles/<uid>/themes', methods=['GET'])
+@app.route('/profiles/<uid>/themes', methods=['GET', 'POST'])
 @login_required
 def themes(uid):
-	print("User visited themes page")
-	prefs = retrieve_prefs(request.cookies.get('uid'))
-	if not prefs:
-		flash("Error retrieving user preferences")
-		return redirect(url_for('dashboard'))
-	print(f"User preferences: {prefs}")
-	return render_template('themes.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs)
+    # get themes for user
+	if request.method == 'GET':
+		print("User visited themes page")
+		cursor = g.conn.execute("SELECT name, text_size, primary_color, accent_color, line_spacing FROM theme_profiles_creates WHERE uid = %s", uid)
+		themes = []
+		for row in cursor:
+			themes.append({'name': row[0], 'text_size': row[1], 'primary_color': row[2], 'accent_color': row[3], 'line_spacing': row[4]})
+		prefs = retrieve_prefs(request.cookies.get('uid'))
+		if not prefs:
+			flash("Error retrieving user preferences")
+			return redirect(url_for('dashboard'))
+		print(f"User preferences: {prefs}")
+		return render_template('themes.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs, themes=themes)
+	elif request.method == 'POST':
+		# update current_theme in users table
+		print(f"User try change theme to {request.form['theme']}")
+		try:
+			theme = request.form['theme']
+			g.conn.execute("UPDATE users SET current_theme = %s WHERE uid = %s", (theme, uid))
+		except Exception as e:
+			flash("Error updating theme")
+			print(f"Error updating theme: {e}")
+			return redirect(url_for('themes', uid=uid))
+		print(f"Setting theme to {theme}")
+		return redirect(url_for('themes', uid=uid))
 
+@app.route('/profiles/<uid>/edit-theme', methods=['GET', 'POST'])
+@login_required
+def edit_theme(uid):
+	if request.method == 'GET':
+		print("User visited edit theme page")
+		prefs = retrieve_prefs(request.cookies.get('uid'))
+		if not prefs:
+			flash("Error retrieving user preferences")
+			return redirect(url_for('dashboard'))
+		print(f"User preferences: {prefs}")
+		return render_template('edit_theme.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs)
+	elif request.method == 'POST':
+		# get new theme data from form
+		theme_name = request.form['theme_name']
+		text_size = request.form['text_size']
+		primary_color = request.form['primary_color']
+		accent_color = request.form['accent_color']
+		line_spacing = request.form['line_spacing']
+		# update theme
+		try: 
+			g.conn.execute("UPDATE theme_profiles_creates SET name = %s, text_size = %s, primary_color = %s, accent_color = %s, line_spacing = %s WHERE uid = %s AND name = %s", theme_name, text_size, primary_color, accent_color, line_spacing, uid, theme_name)
+		except Exception as e:
+			print(f"Error updating theme {theme_name}: {e}")
+			flash("Error updating theme")
+			return redirect(url_for('themes', uid=uid))
+		print(f"Updated theme {theme_name}")
+		flash("Theme updated")
+		return redirect(url_for('themes', uid=uid))
+
+  # 
 @app.route('/profiles/<uid>/moderation', methods=['GET'])
 @login_required
 def moderation_landing(uid):
@@ -362,7 +410,7 @@ def create_channel(fid):
 	flash("Channel created successfully")
 	return redirect(f'/dashboard/{fid}/{cname}')
 
-# get all messages in a channel, long polling style
+# get all messages in a channel
 @app.route('/api/<server>/<channel>/<last>', methods=['GET'])
 def get_messages(server, channel, last):
     
