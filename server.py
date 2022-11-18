@@ -604,7 +604,7 @@ def create_forum(uid):
                 capacity = request.form['capacity']
                 if not capacity.isdigit():
                     raise Exception("Capacity must be a number")
-                if capacity < 1:
+                if int(capacity) < 1:
                     raise Exception("Capacity must be greater than 0")
                 print(f"Capacity: {capacity}")
                 # if forum is public, run this query
