@@ -10,47 +10,65 @@
         </style>
     </head>
     <body>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div id="hideondelay" class="flash">
-                    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+        {% include "flasher.html" %}
         {% include "profile-sidebar.html" %}
         <div style="width: 80%;">
             <div class="top-divider" style="border: none; margin: 0;">
                 <h1>Friends</h1>
             </div>
-            <div style="height: 85%; overflow-x: hidden; filter: brightness(0.8);">
+            <div style="height: 85%; overflow-x: hidden; filter: brightness(0.9);">
                 <div style="height: 50%; width: 100%; display: flex;">
-                    <div style="width: 50%; margin: 10px; filter: brightness(1.2);">
+                    <div style="width: 50%; margin: 10px; filter: brightness(0.9);">
                         <div class="top-divider" style="border: none; margin: 0;">
                             <h1>Friends</h1>
                         </div>
                         <div style="height: 85%; overflow-y: scroll;">
                             {% for friend in data['friends'] %}
-                                <div style="display: flex; align-items: center; margin: 10px;">
-                                    <p>{{ friend }}</p>
+                                <div class="entry"
+                                     style="display: flex;
+                                            align-items: center;
+                                            margin: 10px">
+                                    <h2>{{ friend['name'] }}</h2>
+                                    <form action="/api/{{ uid }}/delete_friend"
+                                          method="post"
+                                          style="margin-left: auto">
+                                        <input type="hidden" name="uid_friend" value="{{ friend['uid'] }}">
+                                        <input type="submit" value="Remove">
+                                    </form>
                                 </div>
                             {% endfor %}
                         </div>
                     </div>
-                    <div style="width: 50%; margin: 10px; filter: brightness(1.2);">
+                    <div style="width: 50%; margin: 10px; filter: brightness(0.9);">
                         <div class="top-divider" style="border: none; margin: 0;">
-                            <h1>Server Invites</h1>
+                            <h1>Forum Invites</h1>
                         </div>
                         <div style="height: 85%; overflow-x: hidden; margin-left: 10px;">
                             {% for invite in data['invites'] %}
-                                <div style="display: flex; align-items: center; margin: 10px;">
-                                    <p>{{ invite }}</p>
+                                <div class="entry"
+                                     style="display: flex;
+                                            align-items: center;
+                                            margin: 10px">
+                                    <h2 style="flex-grow:1;">{{ invite['forum_name'] }}</h2>
+                                    <form action="/api/{{ invite['uid'] }}/accept_request"
+                                          method="post"
+                                          style="margin-left: 10px">
+                                        <input type="hidden" name="uid" value="{{ uid }}" />
+                                        <input type="submit" value="Accept" />
+                                    </form>
+                                    <form action="/api/{{ invite['uid'] }}/reject_request"
+                                          method="post"
+                                          style="margin-left: 10px">
+                                        <input type="hidden" name="uid" value="{{ uid }}" />
+                                        <input type="submit" value="Decline" />
+                                    </form>
                                 </div>
                             {% endfor %}
                         </div>
                     </div>
                 </div>
                 <div style="height: 50%; width: 100%; display: flex;">
-                    <div style="width: 50%; margin: 10px; filter: brightness(1.2);">
+                    <div style="width: 50%; margin: 10px; filter: brightness(0.9);">
                         <div class="top-divider" style="border: none; margin: 0;">
                             <h1>Friend Requests</h1>
                         </div>
@@ -72,16 +90,27 @@
                             {% endfor %}
                         </div>
                     </div>
-                    <div style="width: 50%; margin: 10px; filter: brightness(1.2);">
+                    <div style="width: 50%; margin: 10px; filter: brightness(0.9);">
                         <div class="top-divider" style="border: none; margin: 0;">
                             <h1>Add Friend</h1>
                         </div>
-                        <div style="height: 85%; overflow-x: hidden; margin-left: 10px;">
-                            <form style="padding: 30px"
-                                  action="/api/{{ uid }}/send_request"
+                            <div style="flex-grow:1; overflow-x: hidden; margin-left: 10px;">
+                                <form style="padding: 5px"
+                                      action="/api/{{ uid }}/send_request"
+                                      method="post">
+                                    <input type="text" name="username" placeholder="Username" />
+                                    <input type="submit" value="Add" />
+                                </form>
+                        </div>
+                        <div class="top-divider" style="border: none; margin: 0;">
+                            <h1>Permalink Join</h1>
+                        </div>
+                        <div style="flex-grow:1; overflow-x: hidden; margin-left: 10px;">
+                            <form style="padding: 5px"
+                                  action="/api/{{ uid }}/join_forum"
                                   method="post">
-                                <input type="text" name="username" placeholder="Username" />
-                                <input type="submit" value="Add" />
+                                <input type="text" name="permalink" placeholder="Permalink" />
+                                <input type="submit" value="Join" />
                             </form>
                         </div>
                     </div>

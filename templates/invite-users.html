@@ -1,0 +1,49 @@
+<html>
+    <head>
+        <title>Add Users to</title>
+        <link rel="stylesheet" type="text/css" href={{ url_for("static", filename="style.css")}} />
+        {% include "style-applicator.html" %}
+    </head>
+    <style>
+        input {
+            width: 70%;
+            height: 50px;
+            margin: 8px 0;
+            display: inline-block;
+            box-sizing: border-box;
+        }
+    </style>
+    <body>
+        {% include "flasher.html" %}
+        {% include "profile-sidebar.html" %}
+        <div style="width: 80%; display:flex; flex-direction: column;">
+            <div class="top-divider"
+                 style="border: none;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: row;
+                        justify-content: space-between">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: space-between;">
+                    <h1>Inviting To {{ data['forum'][0]['name'] }}</h1>
+                    <h1>Friends</h1>
+                </div>
+            </div>
+            <div style="flex-grow: 1; overflow-x: hidden; filter: brightness(0.8); padding:10px;">
+                {% for user in data['users'] %}
+                    <div class="entry" style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <div style="flex-grow: 3;">
+                            <h2> {{ user['name'] }} </h2>
+                        </div>
+                        <div style="flex-grow: 1;">
+                            <form action="/api/{{ forum }}/invite_user" method="post">
+                                <input type="hidden" name="uid" value="{{ user['uid'] }}">
+                                <input type="submit" value="Invite {{ user['name'] }}" />
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+            </div>
+        </div>
+    </body>
+</html>

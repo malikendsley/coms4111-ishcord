@@ -7,23 +7,23 @@
     {% endif %}
     <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
     <script>
-      // after page load, attach onclick handlers to the divs in the server-list
+      // after page load, attach onclick handlers to the divs in the forum-list
       $(document).ready(function() {
-        //add onclick handler to each server in the server-list
-        $(".server-entry").click(function() {
-          var server_id = $(this).attr("id");
-          console.log("server id: " + server_id);
-          window.location.href = "/dashboard/" + server_id + "/general";
+        //add onclick handler to each forum in the forum-list
+        $(".forum-entry").click(function() {
+          var forum_id = $(this).attr("id");
+          console.log("forum id: " + forum_id);
+          window.location.href = "/dashboard/" + forum_id + "/general";
         });
         //add onclick handler to each channel in the channel-list
         $(".channel-entry").click(function() {
-          //find the cookie named server
-          var server_id = document.cookie.split("; ").find(row => row.startsWith("server")).split("=")[1];
+          //find the cookie named forum
+          var forum_id = document.cookie.split("; ").find(row => row.startsWith("forum")).split("=")[1];
           var channel_id = $(this).attr("id");
-          window.location.href = "/dashboard/" + server_id + "/" + channel_id;
+          window.location.href = "/dashboard/" + forum_id + "/" + channel_id;
         });
-        // copy selected server div into div with id "channel-header"
-        $(".server-entry.selected").clone().appendTo("#channel-header");
+        // copy selected forum div into div with id "channel-header"
+        $(".forum-entry.selected").clone().appendTo("#channel-header");
         // make the private checkbox show the capacity input when checked, and show the permalink input when unchecked
         $("#private").change(function() {
           if (this.checked) {
@@ -43,28 +43,28 @@
   </head>
   <body>
     
-    <div id="new-server-modal" class="modal-background">
+    <div id="new-forum-modal" class="modal-background">
       <div class="modal">
-        <form class="create-form" action={{ "/api/" + request.cookies.get('uid') + "/create_server" }} method="POST">
-          <h1>Create a new server</h1>
-          <label for="server-name">
-            <h2>Server Name</h2>
+        <form class="create-form" action={{ "/api/" + request.cookies.get('uid') + "/create_forum" }} method="POST">
+          <h1>Create a new forum</h1>
+          <label for="forum-name">
+            <h2>Forum Name</h2>
           </label>
           <input type="text"
-                 id="server-name"
-                 name="server-name"
-                 placeholder="Server Name"
+                 id="forum-name"
+                 name="forum-name"
+                 placeholder="Forum Name"
                  required/>
-          <label for="server-description">
-            <h2>Server Description</h2>
+          <label for="forum-description">
+            <h2>Forum Description</h2>
           </label>
           <input type="text"
-                 id="server-description"
-                 name="server-description"
-                 placeholder="Server Description"
+                 id="forum-description"
+                 name="forum-description"
+                 placeholder="Forum Description"
                  required/>
           <label for="private">
-            <h2>Private Server?</h2>
+            <h2>Private Forum?</h2>
           </label>
           <input type="checkbox"
                  id="private"
@@ -86,19 +86,19 @@
                  name="permalink"
                  placeholder="Permalink"/>
           </div>
-          <button type="submit" id="create-server">Create Server</button>
+          <button type="submit" id="create-forum">Create Forum</button>
           <button type="button"
-                  id="cancel-server"
-                  onclick="document.getElementById('new-server-modal').style.display='none'">
+                  id="cancel-forum"
+                  onclick="document.getElementById('new-forum-modal').style.display='none'">
             Cancel
           </button>
         </form>
       </div>
     </div>
-    {% if server is not none %}
+    {% if forum is not none %}
     <div id="new-channel-modal" class="modal-background">
       <div class="modal">
-        <form class="create-form" action={{ "/api/" + server + "/create_channel" }} method="POST">
+        <form class="create-form" action={{ "/api/" + forum + "/create_channel" }} method="POST">
           <h1>Create a new channel</h1>
           <label for="channel-name">
             <h2>Channel Name</h2>
@@ -118,7 +118,7 @@
                  required/>
           <button type="submit" id="create-channel">Create Channel</button>
           <button type="button"
-                  id="cancel-server"
+                  id="cancel-forum"
                   onclick="document.getElementById('new-channel-modal').style.display='none'">
             Cancel
           </button>
@@ -133,7 +133,7 @@
         </div>
       {% endif %}
     {% endwith %}
-    <div class="servers-column">
+    <div class="forums-column">
       <div class="top-divider">
         <h3 style="overflow-wrap: break-word;">Logged in as</h3>
         <h3 style="overflow-wrap: break-word;">{{ name }}</h3>
@@ -143,17 +143,17 @@
           </button>
         </form>
       </div>
-      <div id="serverlist" class="server-list">
+      <div id="forumlist" class="forum-list">
         {% set data = g.conn.execute("SELECT forums_administrates.name, forums_administrates.description, forums_administrates.fid
         FROM forums_administrates, member_of, users
         WHERE member_of.uid = users.uid
         AND member_of.fid = forums_administrates.fid
         AND users.uid = %s;", uid) %}
         {% for row in data %}
-          {% if row['fid'] == server | int %}
-            <div class="server-entry selected" id="{{ row['fid'] }}">
+          {% if row['fid'] == forum | int %}
+            <div class="forum-entry selected" id="{{ row['fid'] }}">
             {% else %}
-              <div class="server-entry" id="{{ row['fid'] }}">
+              <div class="forum-entry" id="{{ row['fid'] }}">
               {% endif %}
               <h2>{{ row['name'] }}</h2>
               <p>{{ row['description'] }}</p>
@@ -161,9 +161,9 @@
           {% endfor %}
         </div>
         <div class="bottom-divider">
-          <button class="add-server-button"
-                  onclick="document.getElementById('new-server-modal').style.display='block'">
-            New Server
+          <button class="add-forum-button"
+                  onclick="document.getElementById('new-forum-modal').style.display='block'">
+            New Forum
           </button>
         </div>
       </div>
@@ -171,7 +171,7 @@
     <div class="channel-column">
       <div id="channel-header" class="top-divider"></div>
       <div id="channel-list" class="channel-list">
-        {% set data = g.conn.execute("SELECT cname, topic FROM channels_contains WHERE fid = %s;", server) %}
+        {% set data = g.conn.execute("SELECT cname, topic FROM channels_contains WHERE fid = %s;", forum) %}
         {% for row in data %}
           {% if row['cname'] == channel %}
             <div class="channel-entry selected" id="{{ row['cname'] }}">
@@ -184,7 +184,7 @@
           {% endfor %}
         </div>
         <div class="bottom-divider">
-          {% if server %}
+          {% if forum %}
             <button class="add-channel-button"
                     onclick="document.getElementById('new-channel-modal').style.display='block'">
               New Channel
@@ -201,9 +201,9 @@
         <!-- Populated by JS -->
       </div>
       <div class="bottom-divider">
-        {% if server %}
+        {% if forum %}
         <form class="message-form"
-              action="/api/{{ server }}/{{ channel }}/post"
+              action="/api/{{ forum }}/{{ channel }}/post"
               method="POST">
           <input class="message-box"
                  type="text"
@@ -216,14 +216,14 @@
     </div>
     <div class="user-column">
       <div class="top-divider">
-        <h2>Friends in Server</h2>
+        <h2>Friends in Forum</h2>
       </div>
       <div class="user-list">
         {% set data =  g.conn.execute("select name from (select uid, name from member_of natural join users where member_of.fid = %s) as a where a.uid in (
         select uid_sender as uid from friends_with
         where uid_receiver = %s and status = 'accepted'
         union select uid_receiver from friends_with
-        where uid_sender = %s and status = 'accepted');",server, uid, uid) %}
+        where uid_sender = %s and status = 'accepted');",forum, uid, uid) %}
         {% for row in data %}
           {% if name == row[0] %}
             <div class="you">
@@ -236,11 +236,11 @@
         </div>
         <div class="top-divider">
           <h2>
-            Users in Server
+            Users in Forum
           </h2>
         </div>
         <div class="user-list">
-          {% set data = g.conn.execute("SELECT name FROM member_of NATURAL JOIN users WHERE fid = %s;", server).fetchall() %}
+          {% set data = g.conn.execute("SELECT name FROM member_of NATURAL JOIN users WHERE fid = %s;", forum).fetchall() %}
           {% for row in data %}
             {% if name == row[0] %}
               <div class="you">
@@ -253,12 +253,25 @@
               </div>
             {% endfor %}
           </div>
-          <div class="bottom-divider">
+          <div class="bottom-divider" style="flex-direction: column; padding-top: 10px;">
             <form action="/logout">
               <button class="add-channel-button" type="submit" onclick="">
                 Log Out
               </button>
             </form>
+            <form action="/api/{{ uid }}/delete" method="POST">
+              <button class="add-channel-button" type="submit" onclick="">
+                Delete Account
+              </button>
+            </form>
+            {% if forum %}
+            <form action="/api/{{ uid }}/leave" method="POST">
+              <input type="hidden" name="fid" value="{{ forum }}" >
+              <button class="add-channel-button" type="submit" onclick="">
+                Leave Forum
+              </button> 
+            </form> 
+            {% endif %}
           </div>
         </div>
       </body>

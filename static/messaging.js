@@ -1,10 +1,10 @@
-//long poll the server for new messages
+//long poll the forum for new messages
 async function getMessages(last) {
     // if channel contains special characters, encode it
-    var server = document.cookie.split('; ').find(row => row.startsWith('server=')).split('=')[1];
+    var forum = document.cookie.split('; ').find(row => row.startsWith('forum=')).split('=')[1];
     var channel = document.cookie.split('; ').find(row => row.startsWith('channel=')).split('=')[1];
     
-    let response = await fetch("/api/" + server + "/" + channel + "/" + last);
+    let response = await fetch("/api/" + forum + "/" + channel + "/" + last);
     if (response.status == 502) {
         await getMessages(last);
     } else if (response.status != 200) {

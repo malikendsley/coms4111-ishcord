@@ -5,9 +5,9 @@
         </h2>
         <button class="profile-button" type="submit" onclick="window.location.href='{{ url_for('dashboard', uid=request.cookies.get('uid')) }}'">Dashboard</button>
     </div>
-    <button onclick="window.location.href='{{ url_for('themes', uid=request.cookies.get('uid'))}}'">Theme Profiles</button>
-    <button onclick="window.location.href='{{ url_for('friends', uid=request.cookies.get('uid')) }}'">Friends List</button>
-    <button onclick="window.location.href='{{ url_for('moderation_landing', uid=request.cookies.get('uid')) }}'">
+    <button style="height: 100px;" onclick="window.location.href='{{ url_for('themes', uid=request.cookies.get('uid'))}}'">Theme Profiles</button>
+    <button style="height: 100px;" onclick="window.location.href='{{ url_for('friends', uid=request.cookies.get('uid')) }}'">Friends & Forums</button>
+    <button style="height: 100px;" onclick="window.location.href='{{ url_for('moderation_landing', uid=request.cookies.get('uid')) }}'">
         Moderation
     </button>
 </div>

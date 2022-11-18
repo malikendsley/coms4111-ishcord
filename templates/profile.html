@@ -7,7 +7,7 @@
             a, p, h1, h2 {
               color: #{{ prefs['accent_color'] }}; !important;
             }
-            div, .server-entry, .channel-entry {
+            div, .forum-entry, .channel-entry {
               background-color: #{{ prefs['primary_color'] }}; !important;
             }
             .top-divider {
@@ -26,13 +26,7 @@
         </style>
     </head>
     <body>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div id="hideondelay" class="flash">
-                    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+        {% include "flasher.html" %}
         {% include "profile-sidebar.html" %}
         <div style="width: 15%; height: 100%"></div>
         <div style="width: 50%; height: 100%"></div>
