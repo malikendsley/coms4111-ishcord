@@ -583,7 +583,7 @@ def create_forum(uid):
 
                 # check that permalink is unique
                 cursor = g.conn.execute(
-                    "SELECT permalink FROM forums_administrates WHERE permalink = %s", permalink)
+                    "SELECT permalink FROM public_forums WHERE permalink = %s", permalink)
                 if cursor.rowcount > 0:
                     raise Exception("Permalink already exists")
                 # insert into db
