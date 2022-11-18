@@ -837,16 +837,16 @@ def delete_forum(fid):
     flash("Forum deleted successfully")
     return redirect(url_for('dashboard', uid=request.cookies.get('uid')))
 
-# accept a request to join a forum
+# accept a request to join a forum by invite
 @app.route('/api/<fid>/accept_request', methods=['POST'])
 def join_forum_private(fid):
     # get form data
     uid = request.form['uid']
 
     try:
-        # check if forum exists
+        # check if forum exists and is private
         cursor = g.conn.execute(
-            "SELECT fid FROM forums_administrates WHERE fid = %s", fid)
+            "SELECT fid FROM private_forums WHERE fid = %s", fid)
         if cursor.rowcount == 0:
             raise Exception("Forum does not exist")
 
@@ -873,8 +873,8 @@ def join_forum_private(fid):
         else:
             g.conn.execute("""
 				BEGIN;
-				INSERT INTO member_of VALUES (%s, %s)
-				DELETE FROM invites_to WHERE uid_invitee = %s AND fid = %s
+				INSERT INTO member_of (uid, fid) VALUES (%s, %s);
+				DELETE FROM invites_to WHERE uid_invitee = %s AND fid = %s;
 				COMMIT;
        			""", uid, fid, uid, fid)
             # delete request
@@ -889,7 +889,7 @@ def join_forum_private(fid):
     flash("User accepted successfully")
     return redirect(url_for('friends', uid=request.cookies.get('uid'), fid=fid))
 
-# reject a request to join a forum
+# reject a request to join a forum by invite
 @app.route('/api/<fid>/reject_request', methods=['POST'])
 def reject_forum(fid):
     # get form data
