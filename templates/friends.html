@@ -1,0 +1,91 @@
+<html>
+    <head>
+        <title>Friends</title>
+        <link rel="stylesheet" type="text/css" href={{ url_for("static", filename="style.css")}} />
+        {% include "style-applicator.html" %}
+        <style>
+            input {
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div id="hideondelay" class="flash">
+                    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        {% include "profile-sidebar.html" %}
+        <div style="width: 80%;">
+            <div class="top-divider" style="border: none; margin: 0;">
+                <h1>Friends</h1>
+            </div>
+            <div style="height: 85%; overflow-x: hidden; filter: brightness(0.8);">
+                <div style="height: 50%; width: 100%; display: flex;">
+                    <div style="width: 50%; margin: 10px; filter: brightness(1.2);">
+                        <div class="top-divider" style="border: none; margin: 0;">
+                            <h1>Friends</h1>
+                        </div>
+                        <div style="height: 85%; overflow-y: scroll;">
+                            {% for friend in data['friends'] %}
+                                <div style="display: flex; align-items: center; margin: 10px;">
+                                    <p>{{ friend }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div style="width: 50%; margin: 10px; filter: brightness(1.2);">
+                        <div class="top-divider" style="border: none; margin: 0;">
+                            <h1>Server Invites</h1>
+                        </div>
+                        <div style="height: 85%; overflow-x: hidden; margin-left: 10px;">
+                            {% for invite in data['invites'] %}
+                                <div style="display: flex; align-items: center; margin: 10px;">
+                                    <p>{{ invite }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div style="height: 50%; width: 100%; display: flex;">
+                    <div style="width: 50%; margin: 10px; filter: brightness(1.2);">
+                        <div class="top-divider" style="border: none; margin: 0;">
+                            <h1>Friend Requests</h1>
+                        </div>
+                        <div style="height: 85%; overflow-y: scroll;">
+                            {% for request in data['requests'] %}
+                                <div style="display: flex; align-items: center; padding: 10px;">
+                                    <h1>{{ request['name'] }}</h1>
+                                    <div style="flex-grow: 1;">
+                                        <form action="/api/{{ uid }}/accept_friend" method="post">
+                                            <input type="hidden" name="uid_invitee" value="{{ request['uid'] }}">
+                                            <input type="submit" value="Accept">
+                                        </form>
+                                        <form action="/api/{{ uid }}/reject_friend" method="post">
+                                            <input type="hidden" name="uid_invitee" value="{{ request['uid'] }}">
+                                            <input type="submit" value="Decline">
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div style="width: 50%; margin: 10px; filter: brightness(1.2);">
+                        <div class="top-divider" style="border: none; margin: 0;">
+                            <h1>Add Friend</h1>
+                        </div>
+                        <div style="height: 85%; overflow-x: hidden; margin-left: 10px;">
+                            <form style="padding: 30px"
+                                  action="/api/{{ uid }}/send_request"
+                                  method="post">
+                                <input type="text" name="username" placeholder="Username" />
+                                <input type="submit" value="Add" />
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>

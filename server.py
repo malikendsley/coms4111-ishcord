@@ -396,12 +396,68 @@ def moderate_server(uid, fid):
 @app.route('/profiles/<uid>/friends', methods=['GET'])
 def friends(uid):
 	print("User visited friends page")
+	data = {}
+	# get list of friends
+	friends = []
+	try:
+		cursor = g.conn.execute("""
+			select uid, name
+   			from users U left join friends_with F on U.uid = F.uid_sender 
+      		where F.uid_receiver = %s and status = 'accepted' 
+			union 
+   			select uid, name 
+      		from users U left join friends_with F on U.uid = F.uid_receiver 
+        	where  F.uid_sender = %s and status = 'accepted';
+  		""", uid, uid)
+		for row in cursor:
+			friends.append({'uid': row[0], 'name': row[1]})
+	except Exception as e:
+		print(f"Error retrieving friends: {e}")
+		flash("Error retrieving friends")
+		return redirect(url_for('dashboard'))
+	
+ 	# get list of server invites
+	invites = []
+	try:
+		cursor = g.conn.execute("""
+			select forums_administrates.name, forums_administrates.fid
+   			from invites_to left join users on invites_to.uid_invitee = users.uid 
+      		left join forums_administrates on invites_to.fid = forums_administrates.fid 
+        	where users.uid = %s;
+   			""", uid)
+		for row in cursor:
+			invites.append({'server_name': row[0], 'uid': row[1]})
+	except Exception as e:
+		print(f"Error retrieving invites: {e}")
+		flash("Error retrieving invites")
+		return redirect(url_for('dashboard'))
+
+	# get list of friend requests
+	requests = []
+	try:
+		cursor = g.conn.execute("""
+			select uid_sender, name 
+   			from friends_with left join users on uid_sender = uid 
+      		where uid_receiver = %s and status = 'pending';
+   			""", uid)
+		for row in cursor:
+			requests.append({'uid': row[0], 'name': row[1]})
+	except Exception as e:
+		print(f"Error retrieving friend requests: {e}")
+		flash("Error retrieving friend requests")
+		return redirect(url_for('dashboard'))
+
+	# assemble lists into data dictionary
+	data['friends'] = friends
+	data['invites'] = invites
+	data['requests'] = requests
+
 	prefs = retrieve_prefs(request.cookies.get('uid'))
 	if not prefs:
 		flash("Error retrieving user preferences")
 		return redirect(url_for('dashboard'))
 	print(f"User preferences: {prefs}")
-	return render_template('friends.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs)
+	return render_template('friends.html', name=request.cookies.get('name'), uid=request.cookies.get('uid'), prefs=prefs, data=data)
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -679,6 +735,189 @@ def delete_server(fid):
 	print(f"Server {fid} deleted")
 	flash("Server deleted successfully")
 	return redirect(url_for('dashboard', uid=request.cookies.get('uid')))
+
+# accept a request to join a server
+@app.route('/api/<fid>/accept_request', methods=['POST'])
+def join_server(fid):
+	# get form data
+	uid = request.form['uid']
+
+	try:
+		# check if server exists
+		cursor = g.conn.execute("SELECT fid FROM forums_administrates WHERE fid = %s", fid)
+		if cursor.rowcount == 0:
+			raise Exception("Server does not exist")
+
+		# check if user is already in server
+		cursor = g.conn.execute("SELECT uid FROM member_of WHERE uid = %s AND fid = %s", uid, fid)
+		if cursor.rowcount > 0:
+			raise Exception("User is already in server")
+
+		# check that the server is not full
+		cursor = g.conn.execute("SELECT COUNT(uid) FROM member_of WHERE fid = %s", fid)
+		cur_members = cursor.fetchone()[0]
+  
+		cursor = g.conn.execute("SELECT capacity FROM private_forums WHERE fid = %s", fid)
+		capacity = cursor.fetchone()[0]
+  
+		if cur_members >= capacity:
+			raise Exception("Server is full")
+
+		# accept request
+		else:
+			g.conn.execute("INSERT INTO member_of VALUES (%s, %s)", uid, fid)
+			print("User accepted")
+
+	except Exception as e:
+		print(f"Error accepting user: {e}")
+		flash(f"Error accepting user: {str(e)}")
+		return redirect(url_for('moderate_server', uid=request.cookies.get('uid'), fid=fid))
+
+	print(f"User {uid} accepted")
+	flash("User accepted successfully")
+	return redirect(url_for('moderate_server', uid=request.cookies.get('uid'), fid=fid))
+
+# reject a request to join a server
+@app.route('/api/<fid>/reject_request', methods=['POST'])
+def reject_server(fid):
+	# get form data
+	uid = request.form['uid']
+
+	try:
+		# check if server exists
+		cursor = g.conn.execute("SELECT fid FROM forums_administrates WHERE fid = %s", fid)
+		if cursor.rowcount == 0:
+			raise Exception("Server does not exist")
+
+		# check if user is already in server
+		cursor = g.conn.execute("SELECT uid FROM member_of WHERE uid = %s AND fid = %s", uid, fid)
+		if cursor.rowcount > 0:
+			raise Exception("User is already in server")
+
+		# reject request
+		else:
+			g.conn.execute("DELETE FROM invites_to WHERE uid_invitee = %s AND fid = %s", uid, fid)
+			print("User rejected")
+
+	except Exception as e:
+		print(f"Error rejecting user: {e}")
+		flash(f"Error rejecting user: {str(e)}")
+		return redirect(url_for('moderate_server', uid=request.cookies.get('uid'), fid=fid))
+
+	print(f"User {uid} rejected")
+	flash("User rejected successfully")
+	return redirect(url_for('moderate_server', uid=request.cookies.get('uid'), fid=fid))
+
+# send a friend request
+@app.route('/api/<uid>/send_request', methods=['POST'])
+def send_request(uid):
+	# get form data
+	username = request.form['username']
+	our_uid = request.cookies.get('uid')
+	try:
+		# check if user exists
+		cursor = g.conn.execute("SELECT uid FROM users WHERE name = %s", username)
+		if cursor.rowcount == 0:
+			raise Exception("User does not exist")
+
+		# check if user is already friends
+		cursor = g.conn.execute("""
+			select uid from users where uid in (select uid
+   			from users U left join friends_with F on U.uid = F.uid_sender 
+      		where F.uid_receiver = %s and status = 'accepted' 
+			union 
+   			select uid 
+      		from users U left join friends_with F on U.uid = F.uid_receiver 
+        	where  F.uid_sender = %s and status = 'accepted')
+			and name = %s;
+   			""", our_uid, uid, username)
+		
+		if cursor.rowcount > 0:
+			raise Exception("User is already friends")
+
+		# check if a request already exists
+		cursor = g.conn.execute("""
+			select uid from users where uid in (
+			select uid_sender from friends_with where uid_receiver = %s and status = 'pending'
+			union
+			select uid_receiver from friends_with where uid_sender = %s and status = 'pending')
+			and name = %s
+   			""", uid, uid, username)
+		if cursor.rowcount > 0:
+			raise Exception("Request already exists")
+
+		# send request
+		else:
+			# get uid of user to send request to
+			cursor = g.conn.execute("SELECT uid FROM users WHERE name = %s", username)
+			uid_invitee = cursor.fetchone()[0]
+			g.conn.execute("INSERT INTO friends_with (uid_sender, uid_receiver) VALUES (%s, %s)", our_uid, uid_invitee)
+			print("Request sent")
+
+	except Exception as e:
+		print(f"Error sending request: {e}")
+		flash(f"Error sending request: {str(e)}")
+		return redirect(url_for('friends', uid=our_uid, username=username))
+
+	print(f"Request sent to {username}")
+	flash("Request sent successfully")
+	return redirect(url_for('friends', uid=our_uid, username=username))
+
+# accept a friend request
+@app.route('/api/<uid>/accept_friend', methods=['POST'])
+def accept_friend(uid):
+	# get form data
+	uid_inviter = request.form['uid_invitee']
+
+	try:
+		# check if user exists
+		cursor = g.conn.execute("SELECT uid FROM users WHERE uid = %s", uid)
+		if cursor.rowcount == 0:
+			raise Exception("User does not exist")
+
+		# add friend
+		else:
+			g.conn.execute("""
+				UPDATE friends_with SET status = 'accepted' WHERE uid_sender = %s AND uid_receiver = %s
+				""", uid_inviter, uid)
+
+	except Exception as e:
+		print(f"Error accepting friend: {e}")
+		flash(f"Error accepting friend: {str(e)}")
+		return redirect(url_for('friends', uid=request.cookies.get('uid')))
+
+	print(f"User {uid_inviter} accepted")
+	flash("User accepted successfully")
+	return redirect(url_for('friends', uid=request.cookies.get('uid')))
+
+# reject a friend request
+@app.route('/api/<uid>/reject_friend', methods=['POST'])
+def delete_friend(uid):
+	# get form data
+	uid_inviter = request.form['uid_invitee']
+
+	try:
+		# check if user exists
+		cursor = g.conn.execute("SELECT uid FROM users WHERE uid = %s", uid)
+		if cursor.rowcount == 0:
+			raise Exception("User does not exist")
+
+		# delete friend
+		else:
+			g.conn.execute("""
+				DELETE FROM friends_with WHERE uid_sender = %s AND uid_receiver = %s
+				""", uid_inviter, uid)
+
+	except Exception as e:
+		print(f"Error rejecting friend: {e}")
+		flash(f"Error rejecting friend: {str(e)}")
+		return redirect(url_for('friends', uid=request.cookies.get('uid')))
+
+	print(f"User {uid_inviter} rejected")
+	flash("User rejected successfully")
+	return redirect(url_for('friends', uid=request.cookies.get('uid')))
+
+# join a server by permalink
 
 if __name__ == "__main__":
 	import click

@@ -1,8 +1,4 @@
 //long poll the server for new messages
-
-
-
-//long poll the server for new messages
 async function getMessages(last) {
     // if channel contains special characters, encode it
     var server = document.cookie.split('; ').find(row => row.startsWith('server=')).split('=')[1];
