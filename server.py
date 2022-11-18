@@ -738,7 +738,7 @@ def delete_server(fid):
 
 # accept a request to join a server
 @app.route('/api/<fid>/accept_request', methods=['POST'])
-def join_server(fid):
+def join_server_public(fid):
 	# get form data
 	uid = request.form['uid']
 
@@ -765,7 +765,13 @@ def join_server(fid):
 
 		# accept request
 		else:
-			g.conn.execute("INSERT INTO member_of VALUES (%s, %s)", uid, fid)
+			g.conn.execute("""
+				BEGIN;
+				INSERT INTO member_of VALUES (%s, %s)
+				DELETE FROM invites_to WHERE uid_invitee = %s AND fid = %s
+				COMMIT;
+       			""", uid, fid, uid, fid)
+			# delete request
 			print("User accepted")
 
 	except Exception as e:
@@ -919,13 +925,13 @@ def delete_friend(uid):
 
 # join a server by permalink
 @app.route('/api/<uid>/join_server', methods=['POST'])
-def join_server(uid):
+def join_server_private(uid):
 	# get form data
 	permalink = request.form['permalink']
 
 	try:
-		# check if server exists
-		cursor = g.conn.execute("SELECT fid FROM servers WHERE permalink = %s", permalink)
+		# check if permalink exists
+		cursor = g.conn.execute("SELECT fid FROM public_forums WHERE permalink = %s", permalink)
 		if cursor.rowcount == 0:
 			raise Exception("Server does not exist")
 
@@ -937,7 +943,7 @@ def join_server(uid):
 		# join server
 		else:
 			# get fid of server to join
-			cursor = g.conn.execute("SELECT fid FROM servers WHERE permalink = %s", permalink)
+			cursor = g.conn.execute("SELECT fid FROM public_forums WHERE permalink = %s", permalink)
 			fid = cursor.fetchone()[0]
 			g.conn.execute("INSERT INTO member_of (uid, fid) VALUES (%s, %s)", uid, fid)
 			print("Server joined")
@@ -945,11 +951,11 @@ def join_server(uid):
 	except Exception as e:
 		print(f"Error joining server: {e}")
 		flash(f"Error joining server: {str(e)}")
-		return redirect(url_for('servers', uid=request.cookies.get('uid')))
+		return redirect(url_for('dashboard', uid=request.cookies.get('uid')))
 
 	print(f"Server {fid} joined")
 	flash("Server joined successfully")
-	return redirect(url_for('servers', uid=request.cookies.get('uid')))
+	return redirect(url_for('dashboard', uid=request.cookies.get('uid')))
 
 if __name__ == "__main__":
 	import click

@@ -201,6 +201,7 @@
         <!-- Populated by JS -->
       </div>
       <div class="bottom-divider">
+        {% if server %}
         <form class="message-form"
               action="/api/{{ server }}/{{ channel }}/post"
               method="POST">
@@ -210,6 +211,7 @@
                  placeholder="Type a message..."/>
           <button class="send-button" type="submit" value='Send'>Send</button>
         </form>
+        {% endif %}
       </div>
     </div>
     <div class="user-column">
