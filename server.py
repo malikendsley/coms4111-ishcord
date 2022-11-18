@@ -1127,9 +1127,9 @@ def invite_user_public(fid):
         if cursor.rowcount > 0:
             raise Exception("User is already in forum")
 
-        # check that forum is public
+        # check that forum is private
         cursor = g.conn.execute(
-            "SELECT fid FROM public_forums WHERE fid = %s", fid)
+            "SELECT fid FROM private_forums WHERE fid = %s", fid)
         if cursor.rowcount == 0:
             raise Exception("Forum is not public")
 
