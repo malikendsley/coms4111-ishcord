@@ -918,6 +918,38 @@ def delete_friend(uid):
 	return redirect(url_for('friends', uid=request.cookies.get('uid')))
 
 # join a server by permalink
+@app.route('/api/<uid>/join_server', methods=['POST'])
+def join_server(uid):
+	# get form data
+	permalink = request.form['permalink']
+
+	try:
+		# check if server exists
+		cursor = g.conn.execute("SELECT fid FROM servers WHERE permalink = %s", permalink)
+		if cursor.rowcount == 0:
+			raise Exception("Server does not exist")
+
+		# check if user is already in server
+		cursor = g.conn.execute("SELECT uid FROM member_of WHERE uid = %s AND fid = %s", uid, fid)
+		if cursor.rowcount > 0:
+			raise Exception("User is already in server")
+
+		# join server
+		else:
+			# get fid of server to join
+			cursor = g.conn.execute("SELECT fid FROM servers WHERE permalink = %s", permalink)
+			fid = cursor.fetchone()[0]
+			g.conn.execute("INSERT INTO member_of (uid, fid) VALUES (%s, %s)", uid, fid)
+			print("Server joined")
+
+	except Exception as e:
+		print(f"Error joining server: {e}")
+		flash(f"Error joining server: {str(e)}")
+		return redirect(url_for('servers', uid=request.cookies.get('uid')))
+
+	print(f"Server {fid} joined")
+	flash("Server joined successfully")
+	return redirect(url_for('servers', uid=request.cookies.get('uid')))
 
 if __name__ == "__main__":
 	import click
