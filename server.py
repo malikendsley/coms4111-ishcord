@@ -344,6 +344,18 @@ def moderate_forum(uid, fid):
         print(f"Error retrieving forum info: {e}")
         flash("Error retrieving forum info")
         return redirect(url_for('moderation_landing', uid=uid))
+    # if forum is public, get its permalink 
+    try: 
+        cursor = g.conn.execute("""
+            SELECT permalink FROM public_forums WHERE fid = %s;                    
+            """, fid)
+        for row in cursor:
+            forum[0]['permalink'] = row[0]
+    except Exception as e:
+        print(f"Error retrieving forum permalink: {e}")
+        flash("Error retrieving forum info")
+        return redirect(url_for('moderation_landing', uid=uid))
+
     # get list of users in forum
     users = []
     try:
