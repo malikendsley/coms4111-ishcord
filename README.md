@@ -4,12 +4,11 @@ Jennifer Wang - jww2144
 
 PostgreSQL Account:
 
-Username: mse2143 
-Password: 3607
+[Redacted]
 
 URL of Project:
 
-http://34.73.40.234:8111
+[Redacted]
 
 Parts implemented:
 
